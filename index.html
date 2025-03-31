@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexoria</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">Nexoria</div>
+        <nav>
+            <a href="#works">Works</a>
+            <a href="/wordpress">blog</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <video id="video-background" autoplay muted playsinline>
+        <source src="assets/media/mv_01.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="overlay"></div>
+
+    <div class="content">
+        <h1>Nexoria</h1>
+        <div class="button-container">
+            <a href="about.html" class="btn btn-primary">About</a>
+            <a href="#" class="btn btn-secondary">My Works</a>
+        </div>
+    </div>
+
+    <div class="video-nav">
+        <div class="video-title" id="video-title">love is</div>
+        <div class="progress-container" id="progress-container"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const video = document.getElementById('video-background');
+            const progressContainer = document.getElementById('progress-container');
+            const videoTitle = document.getElementById('video-title');
+            
+            const videos = [
+                { url: 'assets/media/mv_01.mp4', title: 'love is' },
+                { url: 'assets/media/mv_02.mp4', title: 'sky dancer' },
+                { url: 'assets/media/mv_05.mp4', title: 'Beyond the Horizon' },
+                { url: 'assets/media/mv_04.mp4', title: 'mandala' }
+            ];
+            let currentVideoIndex = 0;
+
+            // プログレスバーの初期化
+            videos.forEach((_, index) => {
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                progressBar.innerHTML = '<div class="progress-bar-fill"></div>';
+                // プログレスバーにクリックイベントを追加
+                progressBar.addEventListener('click', () => {
+                    changeVideoTo(index);
+                });
+                progressContainer.appendChild(progressBar);
+            });
+
+            function resizeVideo() {
+                const windowAspect = window.innerWidth / window.innerHeight;
+                const videoAspect = video.videoWidth / video.videoHeight;
+                
+                if (windowAspect > videoAspect) {
+                    video.style.width = '100%';
+                    video.style.height = 'auto';
+                } else {
+                    video.style.width = 'auto';
+                    video.style.height = '100%';
+                }
+            }
+
+            // 特定のインデックスの動画に切り替える関数
+            function changeVideoTo(index) {
+                // 前のプログレスバーのアクティブ状態を解除
+                progressContainer.children[currentVideoIndex].classList.remove('active');
+                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = '0%';
+
+                currentVideoIndex = index;
+                video.src = videos[currentVideoIndex].url;
+                videoTitle.textContent = videos[currentVideoIndex].title;
+                video.play();
+
+                // 新しいプログレスバーをアクティブに
+                progressContainer.children[currentVideoIndex].classList.add('active');
+                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = '0%';
+            }
+
+            // 次の動画に切り替える関数
+            function changeVideo() {
+                // 前のプログレスバーのアクティブ状態を解除
+                progressContainer.children[currentVideoIndex].classList.remove('active');
+                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = '0%';
+
+                currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+                video.src = videos[currentVideoIndex].url;
+                videoTitle.textContent = videos[currentVideoIndex].title;
+                video.play();
+
+                // 新しいプログレスバーをアクティブに
+                progressContainer.children[currentVideoIndex].classList.add('active');
+                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = '0%';
+            }
+
+            function updateProgressBar() {
+                const progress = (video.currentTime / video.duration) * 100;
+                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = `${progress}%`;
+            }
+
+            // 動画が終了したら次の動画に進む
+            video.addEventListener('ended', changeVideo);
+
+            // プログレスバーの更新
+            video.addEventListener('timeupdate', updateProgressBar);
+
+            window.addEventListener('resize', resizeVideo);
+            video.addEventListener('loadedmetadata', resizeVideo);
+
+            // 初期状態でのアクティブプログレスバーの設定
+            progressContainer.children[currentVideoIndex].classList.add('active');
+
+            // 動画のメタデータがロードされたときに進行バーをリセット
+            video.addEventListener('loadedmetadata', () => {
+                updateProgressBar();
+            });
+        });
+    </script>
+</body>
+</html>

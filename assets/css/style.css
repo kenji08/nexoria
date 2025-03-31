@@ -1,0 +1,302 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 黒の半透明オーバーレイ */
+    z-index: -50;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    width: 100%;
+}
+
+#video-background {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -100;
+    background-size: cover;
+}
+
+.content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 1;
+    padding: 20px;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color:#fff;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 18px;
+}
+
+.video-nav {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    z-index: 10;
+    color: white;
+    text-align: right;
+}
+
+.video-title {
+    font-size: 18px;
+    margin-bottom: 10px;
+    opacity: 0.7;
+}
+
+.progress-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    width: 50px;
+    height: 2px;
+    background-color: rgba(255,255,255,0.3);
+    overflow: hidden;
+    cursor: pointer; /* クリック可能であることを示す */
+}
+
+.progress-bar-fill {
+    width: 0;
+    height: 100%;
+    background-color: white;
+}
+
+.progress-bar.active .progress-bar-fill {
+    /* transition removed */
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+h1 {
+    font-size: 5vw;
+    margin-bottom: 20px;
+}
+
+p {
+    font-size: 2vw;
+    margin-bottom: 30px;
+}
+
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.gallery img {
+    width: 30%;
+    max-width: 300px;
+    height: auto;
+    margin: 10px;
+}
+
+/* ボタンコンテナのスタイル */
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+/* 共通ボタンスタイル */
+.btn {
+    display: inline-block;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+}
+
+/* プライマリボタン */
+.btn-primary {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #000;
+    border: 2px solid transparent;
+}
+
+.btn-primary:hover {
+    background-color: rgba(255, 255, 255, 1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* セカンダリボタン */
+.btn-secondary {
+    background-color: transparent;
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 8vw;
+    }
+    
+    p {
+        font-size: 4vw;
+    }
+    
+    .gallery img {
+        width: 45%;
+    }
+    
+    /* レスポンシブ対応のボタンスタイル */
+    .button-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .btn {
+        padding: 10px 25px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .gallery img {
+        width: 90%;
+    }
+}
+
+/* 基本的な修正 */
+.progress-bar {
+    width: 100px;
+    height: 10px; /* 高さを2pxから10pxに増加 */
+    background-color: rgba(255,255,255,0.3);
+    overflow: hidden;
+    cursor: pointer;
+    border-radius: 2px; /* 角を丸くして視認性向上 */
+    margin: 10px 0; /* 上下のマージンを追加 */
+    position: relative; /* 疑似要素のための位置指定 */
+    transition: transform 0.2s ease, background-color 0.2s ease; /* ホバーエフェクト用 */
+}
+
+/* クリック領域を拡大するための疑似要素 */
+.progress-bar::before {
+    content: '';
+    position: absolute;
+    top: -10px; /* 上方向に拡張 */
+    left: -5px; /* 左方向に拡張 */
+    right: -5px; /* 右方向に拡張 */
+    bottom: -10px; /* 下方向に拡張 */
+    cursor: pointer;
+    z-index: 1; /* クリックイベントを確実に捕捉 */
+}
+
+/* ホバー時の視覚的フィードバック */
+.progress-bar:hover {
+    background-color: rgba(255,255,255,0.5);
+    transform: scaleY(1.2);
+}
+
+.progress-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.progress-bar-fill {
+    width: 0;
+    height: 100%;
+    background-color: white;
+    border-radius: 5px; /* 角を丸くして視認性向上 */
+    pointer-events: none; /* フィル部分がクリックイベントを妨げないように */
+}
+
+/* アクティブなプログレスバーのスタイル */
+.progress-bar.active {
+    background-color: rgba(255,255,255,0.4);
+    box-shadow: 0 0 5px rgba(255,255,255,0.5);
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    .progress-bar {
+        width: 40px; /* モバイルでは少し小さく */
+        height: 8px;
+    }
+    
+    .progress-container {
+        gap: 15px; /* モバイルでは間隔を少し狭く */
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-bar {
+        width: 30px; /* さらに小さな画面ではさらに小さく */
+        height: 6px;
+    }
+    
+    .progress-container {
+        gap: 10px;
+    }
+}
+

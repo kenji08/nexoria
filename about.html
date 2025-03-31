@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Me - Nexoria</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/about.css">
+</head>
+<body class="about-page">
+    <header>
+        <div class="logo">Nexoria</div>
+        <nav>
+            <a href="index.html#works">Works</a>
+            <a href="/wordpress">blog</a>
+            <a href="about.html" class="active">About</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <div class="overlay"></div>
+
+    <div class="about-container">
+        <div class="about-header">
+            <h1>About Me</h1>
+            <p>Web制作からWeb3コミュニティ管理、メタバースなどの幅広い分野で分野で豊富な経験を積んでいます。ユーザーが使いやすく新しい体験ができるよう注力しています。</p>
+        </div>
+
+        <div class="about-section">
+            <h2>自己紹介</h2>
+            <p>10年以上のWeb制作経験を持ち、デジタルとリアルをつなぐ創造的な場づくりに情熱を注いでいます。特にメタバースやWeb3、AI技術を活用したクリエイティブな表現に関心があり、デザイン・開発・コミュニティ運営の経験を活かして新しい価値を生み出すことを目指しています。</p>
+
+            <p>
+</p>
+        </div>
+
+        <div class="about-section">
+            <h2>専門スキル</h2>
+            <div class="skills-container">
+                <div class="skill-category">
+                    <h3>フロントエンド</h3>
+                    <ul class="skill-list">
+                        <li>HTML/CSS</li>
+                        <li>レスポンシブデザイン</li>
+                    </ul>
+                </div>
+                <div class="skill-category">
+                    <h3>デザインとUX</h3>
+                    <ul class="skill-list">
+                        <li>Figma</li>
+                        <li>Photoshop</li>
+                        <li>WordPress</li>
+                        <li>-</li>
+                    </ul>
+                </div>
+                <div class="skill-category">
+                    <h3>ノーコード開発</h3>
+                    <ul class="skill-list">
+                        <li>Studio</li>
+                        <li>Wix</li>
+                        <li></li>
+                        <li></li>
+                    </ul>
+                </div>
+                <div class="skill-category">
+                    <h3>AI・クリエイティブ</h3>
+                    <ul class="skill-list">
+                        <li>AIアート</li>
+                        <li>AI活用プロダクト</li>
+                        <li>-</li>
+                        <li>-</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h2>価値観と仕事への姿勢</h2>
+            <div class="values-container">
+                <div class="value-card">
+                    <h3>継続的学習</h3>
+                    <p>技術の進化に合わせて常に学び続けることが、クリエイティブな問題解決の鍵だと考えています。新しい技術やツールに対する好奇心を持ち、自己成長のために時間を投資することを大切にしています。</p>
+                </div>
+                <div class="value-card">
+                    <h3>ユーザー中心設計</h3>
+                    <p>最終的にはユーザーの体験が最も重要です。技術的に優れているだけでなく、実際に使いやすく価値を提供するソリューションを作ることを心がけています。ユーザーのニーズと行動を理解し、それに基づいた設計を行います。</p>
+                </div>
+                <div class="value-card">
+                    <h3>協働とオープンネス</h3>
+                    <p>最高の成果は多様な視点と専門知識を持つチームから生まれると信じています。アイデアを共有し、フィードバックを歓迎する環境を大切にしています。異なる背景や専門性を持つ人々と協力することで、より革新的なソリューションが生まれます。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h2>パーソナルな側面</h2>
+            <div class="personal-container">
+                <div class="personal-section">
+                    <h3>インスピレーション源</h3>
+                    <p>デジタル空間でのブランディングやアイデンティティ形成に関心があり、Purple Dayのイベント開催やファッションウィークへの参加を通じて、メタバースでの表現の可能性を探求。DAOに参加し、アンバサダーとしても活動</p>
+                </div>
+                <div class="personal-section">
+                    <h3>趣味と関心事</h3>
+                    <div class="interests-list">
+                        <span class="interest-tag">Web3メタバース</span>
+                        <span class="interest-tag">写真撮影</span>
+                        <span class="interest-tag">AIアート</span>
+                        <span class="interest-tag">ー</span>
+                        <span class="interest-tag">ー</span>
+                    </div>
+                </div>
+                <div class="personal-section">
+                    <h3>将来のビジョン</h3>
+                    <p>コミュニティ運営・教育・イベント企画を通じて、クリエイティブな活動をつなぎ、新たな価値を生み出すことを目指しています。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // アクティブなナビゲーションリンクのスタイルを追加
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPage = window.location.pathname.split('/').pop();
+            const navLinks = document.querySelectorAll('nav a');
+            
+            navLinks.forEach(link => {
+                const linkHref = link.getAttribute('href');
+                if (linkHref === currentPage || linkHref.includes(currentPage)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

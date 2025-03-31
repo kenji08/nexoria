@@ -1,0 +1,201 @@
+/* About ページ専用のスタイル */
+body.about-page {
+    background-color: #121212;
+    color: white;
+    overflow-y: auto;
+}
+
+.about-container {
+    max-width: 1200px;
+    margin: 120px auto 60px;
+    padding: 0 20px;
+}
+
+.about-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.about-header h1 {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+}
+
+.about-header p {
+    font-size: 1.2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.about-section {
+    margin-bottom: 80px;
+}
+
+.about-section h2 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    position: relative;
+    display: inline-block;
+}
+
+.about-section h2:after {
+    content: '';
+    position: absolute;
+    width: 60%;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.7);
+    bottom: -10px;
+    left: 0;
+}
+
+.about-section p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 20px;
+}
+
+.skills-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.skill-category {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.skill-category:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.skill-category h3 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.skill-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.skill-list li {
+    margin-bottom: 12px;
+    position: relative;
+    padding-left: 20px;
+}
+
+.skill-list li:before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.values-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.value-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 30px;
+    transition: transform 0.3s ease;
+}
+
+.value-card:hover {
+    transform: translateY(-5px);
+}
+
+.value-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.value-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.personal-container {
+    margin-top: 40px;
+}
+
+.personal-section {
+    margin-bottom: 40px;
+}
+
+.personal-section h3 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.interests-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.interest-tag {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.interest-tag:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* アクティブなナビゲーションリンクのスタイル */
+nav a.active {
+    border-bottom: 2px solid white;
+    padding-bottom: 3px;
+}
+
+@media (max-width: 768px) {
+    .about-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .about-section h2 {
+        font-size: 1.8rem;
+    }
+    
+    .skills-container, .values-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .interests-list {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .interest-tag {
+        display: inline-block;
+        width: fit-content;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-header h1 {
+        font-size: 2rem;
+    }
+    
+    .about-container {
+        margin-top: 100px;
+    }
+}
