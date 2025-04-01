@@ -6,10 +6,11 @@
     <title>About Me - Nexoria</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/about.css">
-     <link rel="stylesheet" href="assets/css/responsive-header.css">
+    <link rel="stylesheet" href="assets/css/responsive-header.css">
 </head>
 <body class="about-page">
-<div id="header-container"></div>
+    <!-- ヘッダーコンテナ -->
+    <div id="header-container"></div>
 
     <div class="overlay"></div>
 
@@ -110,20 +111,23 @@
         </div>
     </div>
 
+    <script src="assets/js/header-common.js"></script>
     <script>
         // アクティブなナビゲーションリンクのスタイルを追加
         document.addEventListener('DOMContentLoaded', () => {
-            const currentPage = window.location.pathname.split('/').pop();
-            const navLinks = document.querySelectorAll('nav a');
-            
-            navLinks.forEach(link => {
-                const linkHref = link.getAttribute('href');
-                if (linkHref === currentPage || linkHref.includes(currentPage)) {
-                    link.classList.add('active');
-                }
-            });
+            // ヘッダーが読み込まれた後にナビゲーションリンクを処理するため、少し遅延させる
+            setTimeout(() => {
+                const currentPage = window.location.pathname.split('/').pop();
+                const navLinks = document.querySelectorAll('nav a');
+                
+                navLinks.forEach(link => {
+                    const linkHref = link.getAttribute('href');
+                    if (linkHref === currentPage || linkHref.includes(currentPage)) {
+                        link.classList.add('active');
+                    }
+                });
+            }, 100);
         });
     </script>
-    <script src="assets/js/header-common.js"></script>
 </body>
 </html>

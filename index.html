@@ -9,8 +9,7 @@
 </head>
 <body>
     <!-- ヘッダーコンテナ -->
-<div id="header-container"></div>
-
+    <div id="header-container"></div>
 
     <video id="video-background" autoplay muted playsinline>
         <source src="assets/media/mv_01.mp4" type="video/mp4">
@@ -32,6 +31,7 @@
         <div class="progress-container" id="progress-container"></div>
     </div>
 
+    <script src="assets/js/header-common.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             const video = document.getElementById('video-background');
@@ -126,6 +126,5 @@
             });
         });
     </script>
-<script src="assets/js/header-common.js"></script>
 </body>
 </html>

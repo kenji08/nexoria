@@ -7,11 +7,10 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/works.css">
     <link rel="stylesheet" href="assets/css/responsive-header.css">
-
 </head>
 <body class="works-page">
- 
-<div id="header-container"></div>
+    <!-- ヘッダーコンテナ -->
+    <div id="header-container"></div>
 
     <div class="overlay"></div>
 
@@ -124,7 +123,7 @@
             <!-- プロジェクト6 -->
             <div class="project-card" data-category="landing-page">
                 <div class="project-image">
-                    <img src="assets/img/projects/mvfw_760x426.png" alt="">
+                    <img src="assets/img/projects/mvmf_760x426.png" alt="">
                     <div class="project-overlay">
                         <div class="project-details">
                             <h3>メタバースファッションウィーク参加</h3>
@@ -141,6 +140,7 @@
         </div>
     </div>
 
+    <script src="assets/js/header-common.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // フィルタリング機能
@@ -188,17 +188,19 @@
             }, 200);
 
             // アクティブなナビゲーションリンクのスタイル
-            const currentPage = window.location.pathname.split('/').pop();
-            const navLinks = document.querySelectorAll('nav a');
-            
-            navLinks.forEach(link => {
-                const linkHref = link.getAttribute('href');
-                if (linkHref === currentPage || linkHref.includes(currentPage)) {
-                    link.classList.add('active');
-                }
-            });
+            // ヘッダーが読み込まれた後にナビゲーションリンクを処理するため、少し遅延させる
+            setTimeout(() => {
+                const currentPage = window.location.pathname.split('/').pop();
+                const navLinks = document.querySelectorAll('nav a');
+                
+                navLinks.forEach(link => {
+                    const linkHref = link.getAttribute('href');
+                    if (linkHref === currentPage || linkHref.includes(currentPage)) {
+                        link.classList.add('active');
+                    }
+                });
+            }, 100);
         });
     </script>
-    <script src="assets/js/header-common.js"></script>
 </body>
 </html>
