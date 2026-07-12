@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>映画『NOVA —覚醒の青き閃光—』公式サイト</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Oswald:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #00d2ff;
+            --bg-dark: #02060c;
+            --text-white: #ffffff;
+            --accent-gold: #d4af37;
+            --section-bg: rgba(255, 255, 255, 0.03);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: 'Noto Sans JP', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            line-height: 1.8;
+        }
+
+        /* 背景演出 */
+        .global-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, #0a1a30 0%, #02060c 100%);
+            z-index: -2;
+        }
+
+        header {
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(2,6,12,0.9), transparent);
+        }
+
+        .logo-small {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.8rem;
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 30px;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        nav a:hover { color: var(--primary-blue); }
+
+        /* セクション共通スタイル */
+        section {
+            padding: 100px 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 60px;
+            letter-spacing: 0.2em;
+            color: var(--primary-blue);
+            text-transform: uppercase;
+        }
+
+        /* ヒーローセクション */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .poster-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .poster-img {
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 0 50px rgba(0, 210, 255, 0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+
+        .main-visual-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: clamp(4rem, 15vw, 10rem);
+            line-height: 0.8;
+            background: linear-gradient(to bottom, #fff, #777);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+        }
+
+        /* イントロダクション */
+        .intro-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+        }
+
+        .intro-text h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--primary-blue);
+        }
+
+        /* アワード・実績 */
+        .awards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .award-card {
+            background: var(--section-bg);
+            padding: 30px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .award-card:hover {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .award-icon { color: var(--accent-gold); font-size: 2rem; margin-bottom: 10px; }
+
+        .revenue-banner {
+            background: linear-gradient(90deg, transparent, rgba(255, 62, 62, 0.2), transparent);
+            text-align: center;
+            padding: 40px;
+            margin: 50px 0;
+        }
+
+        .revenue-banner h2 {
+            font-size: 3.5rem;
+            color: #ff3e3e;
+            margin: 0;
+            text-shadow: 0 0 20px rgba(255, 62, 62, 0.4);
+        }
+
+        /* スタッフ・キャスト */
+        .credits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            background: rgba(255,255,255,0.02);
+            padding: 40px;
+            border-radius: 10px;
+        }
+
+        .credit-item label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--primary-blue);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .credit-item p { font-weight: bold; font-size: 1.1rem; }
+
+        /* フッター */
+        footer {
+            background: #010306;
+            padding: 80px 20px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .format-list {
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-weight: bold;
+            color: #666;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .intro-grid { grid-template-columns: 1fr; }
+            header { padding: 15px 20px; }
+            nav { display: none; }
+            .revenue-banner h2 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="global-bg"></div>
+
+    <header>
+        <a href="#" class="logo-small">NOVA PROJECT</a>
+        <nav>
+            <a href="#intro">STORY</a>
+            <a href="#awards">AWARDS</a>
+            <a href="#credits">CAST&STAFF</a>
+        </nav>
+    </header>
+
+    <!-- ヒーロー -->
+    <section class="hero">
+        <div class="poster-container">
+            <img src="poster.png" class="poster-img" alt="NOVA">
+        </div>
+        <p style="letter-spacing: 0.5em;">その戦いは、世界の未来を変えた——</p>
+        <h1 class="main-visual-title">NOVA</h1>
+        <p style="font-size: 1.5rem; letter-spacing: 0.3em; margin-bottom: 50px;">覚醒の青き閃光</p>
+        <div style="font-size: 2rem; border: 2px solid var(--primary-blue); padding: 10px 40px; font-weight: bold;">
+            2025 SUMMER ROADSHOW
+        </div>
+    </section>
+
+    <!-- 実績バナー -->
+    <div class="revenue-banner">
+        <p>THANK YOU FOR THE GLOBAL HIT!</p>
+        <h2>興行収入 20億ドル突破!!</h2>
+        <p>全世界を震撼させた、圧倒的映像体験。</p>
+    </div>
+
+    <!-- ストーリー -->
+    <section id="intro">
+        <h2 class="section-title">Introduction</h2>
+        <div class="intro-grid">
+            <div class="intro-text">
+                <h3>世界が息を呑んだ、<br>魂を揺さぶる物語。</h3>
+                <p>空を裂く青き閃光と共に現れた少女、ノヴァ。彼女の瞳に宿る力は、希望か、それとも破滅か。失われた記憶を巡る孤独な戦いは、やがて世界全体を巻き込む巨大な陰謀へと繋がっていく。</p>
+                <p>「自分は一体何者なのか？」<br>その問いの答えが出たとき、新時代の神話が幕を開ける。</p>
+            </div>
+            <div style="background: rgba(0, 210, 255, 0.1); padding: 30px; border-radius: 10px;">
+                <p style="font-style: italic; font-size: 1.1rem;">「アニメーションの概念を塗り替えた。これこそが、私たちが待ち望んでいた映画だ。」<br>— <strong>Neo-Tokyo Weekly</strong></p>
+                <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-style: italic; font-size: 1.1rem;">「息を呑むほど美しい。全編がクライマックスのような衝撃。」<br>— <strong>Global Cinephile</strong></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 受賞歴 -->
+    <section id="awards">
+        <h2 class="section-title">Awards Gallery</h2>
+        <div class="awards-grid">
+            <div class="award-card">
+                <div class="award-icon">🏆</div>
+                <h4>第48回 世界アニメ大賞</h4>
+                <p>最優秀長編映画賞 / 監督賞 受賞</p>
+            </div>
+            <div class="award-card">
+                <div class="award-icon">🏆</div>
+                <h4>プラチナ・グローブ 2025</h4>
+                <p>アニメーション映画部門 最優秀作品賞</p>
+            </div>
+            <div class="award-card">
+                <div class="award-icon">🏆</div>
+                <h4>国際VFXフェスティバル</h4>
+                <p>革新的ビジュアル表現賞 金賞</p>
+            </div>
+            <div class="award-card">
+                <div class="award-icon">🏆</div>
+                <h4>全世界映画祭 50冠達成</h4>
+                <p>主要映画祭での受賞実績合計</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- スタッフ・キャスト -->
+    <section id="credits">
+        <h2 class="section-title">Cast & Staff</h2>
+        <div class="credits-grid">
+            <div class="credit-item">
+                <label>NOVA</label>
+                <p>アイラ・ミズキ</p>
+            </div>
+            <div class="credit-item">
+                <label>REN</label>
+                <p>ケン・オザキ</p>
+            </div>
+            <div class="credit-item">
+                <label>DIRECTOR</label>
+                <p>サトシ・カドヤ</p>
+            </div>
+            <div class="credit-item">
+                <label>ANIMATION STUDIO</label>
+                <p>NEO-GENESIS STUDIO</p>
+            </div>
+            <div class="credit-item">
+                <label>MUSIC</label>
+                <p>HIROYUKI ZEN</p>
+            </div>
+            <div class="credit-item">
+                <label>EXECUTIVE PRODUCER</label>
+                <p>AETHER FILMS Group</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="logo-small" style="margin-bottom: 20px; display: inline-block;">NOVA PROJECT</div>
+        <div class="format-list">
+            <span>ULTRA-SCREEN</span>
+            <span>HYPER-4D</span>
+            <span>SONIC-SURROUND 9.1</span>
+            <span>NEO-IMAX</span>
+        </div>
+        <p class="copyright">
+            &copy; 2025 "NOVA" Film Partners / Produced by Neo-Genesis Group.<br>
+            当サイトの画像・文章の無断転載を禁じます。
+        </p>
+    </footer>
+
+</body>
+</html>

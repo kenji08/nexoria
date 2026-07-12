@@ -1,0 +1,6 @@
+# 大容量動画はgit管理外（FTP等でサーバーへ直接アップ）
+aiportfolio/videos/
+# Premiere Pro作業ファイル
+aiportfolio/編集/
+# ローカル開発設定
+aiportfolio/.claude/

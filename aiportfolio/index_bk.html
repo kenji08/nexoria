@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7W9P1Q79KJ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-7W9P1Q79KJ');
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="AIが生成した映像作品のポートフォリオサイト。最新のAI動画技術を用いたクリエイティブな映像コレクション。" />
+    <title>AI Video Portfolio | AIが紡ぐ映像の世界</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preload the fonts CSS to discover font files earlier -->
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;700&display=swap"
+        rel="stylesheet" />
+    <!-- Critical CSS -->
+    <style>
+        :root {
+            --bg-base: #000000;
+            --text-primary: #fafafa;
+            --font-sans: 'Inter', 'Noto Sans JP', sans-serif;
+            --header-h: 70px;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+        }
+
+        .hero {
+            position: relative;
+            min-height: 100svh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        .hero-video-wrap {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .hero-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+
+        .hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.8rem, 4.5vw, 3.8rem);
+            font-weight: 300;
+            color: #fff;
+            opacity: 0;
+            animation: fadeUp 1.5s cubic-bezier(.16, 1, .3, 1) 0.8s forwards;
+        }
+
+        .hero-title-accent {
+            display: block;
+            font-style: italic;
+            opacity: 0.7;
+            margin-top: 12px;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <!-- Defer non-critical CSS -->
+    <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="style.css">
+    </noscript>
+</head>
+
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="site-header" id="site-header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">AI<em>Vision</em></span>
+            </div>
+            <nav class="header-nav" id="header-nav">
+                <a href="#works" class="nav-link">Works</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </nav>
+            <button class="menu-toggle" id="menu-toggle" aria-label="メニューを開く">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="hero">
+        <div class="hero-video-wrap">
+            <video src="videos/work-22-top.mp4" autoplay muted loop playsinline class="hero-video"
+                id="hero-bg-video"></video>
+            <div class="hero-overlay"></div>
+            <div class="film-grain"></div>
+        </div>
+        <div class="hero-content">
+            <p class="hero-eyebrow">AI Generated Cinematics</p>
+            <h1 class="hero-title">
+                AIが紡ぐ<br />
+                <span class="hero-title-accent">映像の世界</span>
+            </h1>
+            <p class="hero-desc">
+                最先端のAI映像生成技術で生み出したビジュアル体験。<br />
+                テキストから世界を創り出す新時代のクリエイティブワーク。
+            </p>
+            <div class="hero-ctas">
+                <a href="#works" class="btn btn-primary">作品を見る</a>
+                <a href="#about" class="btn btn-ghost">About &rarr;</a>
+            </div>
+        </div>
+        <div class="hero-scroll-hint" aria-hidden="true">
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- ===== FILTER BAR ===== -->
+    <div class="filter-bar" id="works">
+        <div class="filter-inner">
+            <span class="filter-label">Filter:</span>
+            <div class="filter-chips" role="group" aria-label="カテゴリフィルター">
+                <button class="chip active" data-filter="all" id="filter-all">All</button>
+                <button class="chip" data-filter="cinematic" id="filter-cinematic">Cinematic</button>
+                <button class="chip" data-filter="abstract" id="filter-abstract">Abstract</button>
+                <button class="chip" data-filter="nature" id="filter-nature">Nature</button>
+                <button class="chip" data-filter="scifi" id="filter-scifi">Sci-Fi</button>
+                <button class="chip" data-filter="portrait" id="filter-portrait">Portrait</button>
+                <button class="chip" data-filter="anime" id="filter-anime">Anime</button>
+            </div>
+            <div class="sort-wrap">
+                <select id="sort-select" class="sort-select" aria-label="並び順">
+                    <option value="newest">新しい順</option>
+                    <option value="name">名前順</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== GRID ===== -->
+    <main class="grid-section">
+        <div class="works-grid" id="works-grid" role="list">
+            <!-- JS でタイルを動的挿入 -->
+        </div>
+        <div class="load-more-wrap">
+            <button class="btn btn-outline" id="load-more">さらに読み込む</button>
+        </div>
+    </main>
+
+    <!-- ===== ABOUT ===== -->
+    <section class="about-section" id="about">
+        <div class="about-inner">
+            <div class="about-text">
+                <p class="section-eyebrow">About</p>
+                <h2 class="section-title">視覚表現の、<br /><span class="gradient-text">その先へ</span></h2>
+                <p class="about-desc">
+                    Sora2、Veo3、OiiOii、Flovaなどの最新AI動画生成ツールを駆使し、
+                    これまで不可能だった映像表現を追求しています。
+                    プロンプトエンジニアリングと映像センスを掛け合わせた独自のアプローチで
+                    制作した作品群をご覧ください。
+                </p>
+                <div class="tech-pills">
+                    <span class="tech-pill">Sora2</span>
+                    <span class="tech-pill">Veo3</span>
+                    <span class="tech-pill">OiiOii</span>
+                    <span class="tech-pill">Flova</span>
+                </div>
+            </div>
+            <div class="about-stats">
+                <div class="stat-card" id="stat-works">
+                    <span class="stat-num" data-target="0">0</span>
+                    <span class="stat-label">作品数</span>
+                </div>
+                <div class="stat-card" id="stat-months">
+                    <span class="stat-num" data-target="0">0</span>
+                    <span class="stat-label">ヶ月の制作歴</span>
+                </div>
+
+                <div class="stat-card" id="stat-cpp">
+                    <span class="stat-num" data-target="5">0</span>
+                    <span class="stat-label">CPP</span>
+                </div>
+                <div class="stat-card" id="stat-duration">
+                    <span class="stat-num" data-target="0">0</span>
+                    <span class="stat-label">掲載総映像（分）</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CONTACT ===== -->
+    <section class="contact-section" id="contact">
+        <div class="contact-inner">
+            <p class="section-eyebrow">Contact</p>
+            <h2 class="section-title">想像を形にする、<br /><span class="gradient-text">パートナーとして</span></h2>
+            <p class="contact-desc">AI映像制作のご依頼やコラボレーションのご相談はお気軽にどうぞ。</p>
+            <a href="https://forms.gle/zLvEbzqVWQuzJLhJ7" class="btn btn-primary btn-lg" id="contact-btn"
+                target="_blank">メッセージを送る</a>
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="logo">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">AI<em>Vision</em></span>
+            </div>
+            <p class="footer-copy">&copy; 2025 AIVision Portfolio. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="https://x.com/nmkenji" target="_blank" rel="noopener" class="footer-link">X (Twitter)</a>
+                <a href="https://www.youtube.com/@SnowLabs" target="_blank" rel="noopener"
+                    class="footer-link">YouTube</a>
+                <a href="https://www.instagram.com/kenji0031/" target="_blank" rel="noopener"
+                    class="footer-link">Instagram</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===== LIGHTBOX ===== -->
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="動画プレイヤー">
+        <button class="lightbox-close" id="lightbox-close" aria-label="閉じる">&times;</button>
+        <div class="lightbox-content" id="lightbox-content"></div>
+        <div class="lightbox-info" id="lightbox-info"></div>
+    </div>
+    <div class="lightbox-overlay" id="lightbox-overlay"></div>
+
+    <script src="main.js"></script>
+</body>
+
+</html>
