@@ -107,8 +107,8 @@ html{scroll-behavior:smooth}
 /* lightbox */
 .lb{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;cursor:pointer}
 .lb.open{display:flex}
-.lb-inner{max-width:1080px;width:88%;cursor:default}
-.lb-inner video{width:100%;border-radius:12px;background:#000;box-shadow:0 24px 80px rgba(0,0,0,.6);display:block}
+.lb-inner{max-width:min(1080px,92vw);max-height:78vh;cursor:default}
+.lb-inner video{max-width:100%;max-height:78vh;width:auto;height:auto;margin:0 auto;border-radius:12px;background:#000;box-shadow:0 24px 80px rgba(0,0,0,.6);display:block}
 .lb-cap{text-align:center}
 .lb-title{margin:0 0 4px;font-size:17px;font-weight:700}
 .lb-meta{margin:0;font-size:12.5px;color:#a1a1aa}
@@ -130,7 +130,7 @@ html{scroll-behavior:smooth}
 </header>
 
 <section class="hero" id="top">
-  <video src="videos/work-22-top.mp4" autoplay muted loop playsinline></video>
+  <video src="videos/work-32-top.mp4" autoplay muted loop playsinline></video>
   <div class="hero-grad"></div>
   <div class="hero-body">
     <p class="hero-kicker">AI FILMMAKER — JAPAN</p>
@@ -148,29 +148,29 @@ html{scroll-behavior:smooth}
     <h2>SELECTED WORKS</h2>
   </div>
   <div class="sel-grid">
-    <div class="sel-tile main" data-work="24">
-      <video src="videos/work-24.mp4" autoplay muted loop playsinline></video>
+    <div class="sel-tile main">
+      <video src="videos/work-33.mp4" autoplay muted loop playsinline></video>
       <div class="sel-grad"></div>
       <div class="sel-cap">
-        <div class="sel-tags"><span class="sel-tag">CM</span><span class="sel-tag">Renoise</span></div>
-        <p class="sel-title">Just Create</p>
-        <p class="sel-meta">Don't wait for inspiration — 架空ブランドCM · 0:15</p>
+        <div class="sel-tags"><span class="sel-tag">CM</span><span class="sel-tag">Pollo</span></div>
+        <p class="sel-title">CLEAR FREE</p>
+        <p class="sel-meta">架空のノンアルコールドリンクCM · <span class="sel-dur">--:--</span></p>
       </div>
     </div>
-    <div class="sel-tile" data-work="5">
-      <video src="videos/work-5.mp4" autoplay muted loop playsinline preload="metadata"></video>
+    <div class="sel-tile">
+      <video src="videos/work-30.mp4" autoplay muted loop playsinline preload="metadata"></video>
       <div class="sel-grad"></div>
       <div class="sel-cap">
-        <p class="sel-title">Google Cloud 架空CM</p>
-        <p class="sel-meta">くりえみ AIフィルムコンテスト応募 · Flova · 0:28</p>
+        <p class="sel-title">LIVE OPENING</p>
+        <p class="sel-meta">アニメヒット作にインスピレーションを受けて作った作品 · OiiOii · <span class="sel-dur">--:--</span></p>
       </div>
     </div>
-    <div class="sel-tile" data-work="7">
-      <video src="videos/work-7.mp4" autoplay muted loop playsinline preload="metadata"></video>
+    <div class="sel-tile">
+      <video src="videos/work-31.mp4" autoplay muted loop playsinline preload="metadata"></video>
       <div class="sel-grad"></div>
       <div class="sel-cap">
-        <p class="sel-title">予定外から人生は動き出す</p>
-        <p class="sel-meta">くりえみ AIフィルムコンテスト応募 · Sora2 · 0:41</p>
+        <p class="sel-title">果まで届け</p>
+        <p class="sel-meta">縦型アニメ · OiiOii · <span class="sel-dur">--:--</span></p>
       </div>
     </div>
   </div>
@@ -178,7 +178,7 @@ html{scroll-behavior:smooth}
 
 <section class="works" id="works">
   <div class="works-head">
-    <h2>All Works <span class="works-count" id="worksCount"></span></h2>
+    <h2>ALL WORKS <span class="works-count" id="worksCount"></span></h2>
     <div class="chips" id="chips"></div>
   </div>
   <div class="grid" id="grid"></div>
@@ -268,10 +268,14 @@ function renderGrid() {
         '<div class="card-grad"></div>' +
         '<span class="badge cat">' + CATS[w.cat] + '</span>' +
         '<span class="badge tool">' + w.tool + '</span>' +
-        '<span class="badge dur">' + w.dur + '</span>' +
+        '<span class="badge dur">--:--</span>' +
       '</div>' +
       '<div class="card-body"><p class="card-title">' + w.title + '</p><p class="card-desc">' + w.desc + '</p></div>';
-    card.onclick = () => openLightbox(w);
+    const durBadge = card.querySelector('.badge.dur');
+    const cardVideo = card.querySelector('video');
+    const setDur = () => { w.dur = fmtDur(cardVideo.duration); durBadge.textContent = w.dur; };
+    if (cardVideo.readyState >= 1) setDur(); else cardVideo.addEventListener('loadedmetadata', setDur);
+    card.onclick = () => openLightbox({ srcUrl: src(w), title: w.title, meta: CATS[w.cat] + ' · ' + w.tool + ' · ' + w.dur });
     card.onmouseenter = () => { const v = card.querySelector('video'); if (v) v.play().catch(() => {}); };
     card.onmouseleave = () => { const v = card.querySelector('video'); if (v) { v.pause(); v.currentTime = 0; } };
     gridEl.appendChild(card);
@@ -280,11 +284,11 @@ function renderGrid() {
 
 const lb = document.getElementById('lightbox');
 const lbVideo = document.getElementById('lbVideo');
-function openLightbox(w) {
-  lbVideo.src = src(w);
+function openLightbox({ srcUrl, title, meta }) {
+  lbVideo.src = srcUrl;
   lbVideo.muted = true;
-  document.getElementById('lbTitle').textContent = w.title;
-  document.getElementById('lbMeta').textContent = CATS[w.cat] + ' · ' + w.tool + ' · ' + w.dur;
+  document.getElementById('lbTitle').textContent = title;
+  document.getElementById('lbMeta').textContent = meta;
   lb.classList.add('open');
   lbVideo.play().catch(() => {});
 }
@@ -296,8 +300,23 @@ function closeLightbox() {
 }
 lb.addEventListener('click', (e) => { if (!e.target.closest('.lb-inner')) closeLightbox(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+function fmtDur(sec) {
+  sec = Math.floor(sec);
+  return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+}
 document.querySelectorAll('.sel-tile').forEach(t => {
-  t.onclick = () => { const w = WORKS.find(x => x.id === Number(t.dataset.work)); if (w) openLightbox(w); };
+  const v = t.querySelector('video');
+  const durEl = t.querySelector('.sel-dur');
+  if (v && durEl) {
+    const setDur = () => { durEl.textContent = fmtDur(v.duration); };
+    if (v.readyState >= 1) setDur(); else v.addEventListener('loadedmetadata', setDur);
+  }
+  t.onclick = () => {
+    const srcUrl = v.getAttribute('src');
+    const title = t.querySelector('.sel-title').textContent;
+    const meta = t.querySelector('.sel-meta').textContent;
+    openLightbox({ srcUrl, title, meta });
+  };
 });
 
 document.getElementById('moreBtn').onclick = () => { expanded = true; renderGrid(); };
