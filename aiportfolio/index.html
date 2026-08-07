@@ -4,10 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SNOW LABS — AI Film Studio</title>
-<meta name="description" content="CM・MV・アニメーションをAIで制作。依頼できるAIクリエイター。Commercial-ready AI video.">
+<meta name="description" content="商品広告・ショート動画をAIで制作。Commercial-ready AI video for brands.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SNOW LABS">
+<meta property="og:url" content="https://nexoria.lomo.jp/aiportfolio/">
+<meta property="og:title" content="SNOW LABS — AI Film Studio">
+<meta property="og:description" content="商品広告・ショート動画をAIで制作。Commercial-ready AI video for brands.">
+<meta property="og:image" content="https://nexoria.lomo.jp/aiportfolio/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SNOW LABS — AI Film Studio">
+<meta name="twitter:description" content="商品広告・ショート動画をAIで制作。Commercial-ready AI video for brands.">
+<meta name="twitter:image" content="https://nexoria.lomo.jp/aiportfolio/og-image.jpg">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#050505;font-family:'Inter','Noto Sans JP',sans-serif;color:#fafafa}
@@ -22,10 +36,10 @@ html{scroll-behavior:smooth}
 .hd-name{font-weight:700;font-size:16px;letter-spacing:.14em}
 .hd-sub{font-size:11px;color:#71717a;letter-spacing:.08em}
 .hd-nav{display:flex;align-items:center;gap:clamp(14px,3vw,28px);font-size:13px;color:#a1a1aa}
-.hd-nav a{color:#a1a1aa}.hd-nav a:hover{color:#fff}
+.hd-nav a{color:#a1a1aa}.hd-nav a:hover,.hd-nav a.active{color:#fff}
 .btn-hire{background:#fff;color:#000 !important;padding:9px 20px;border-radius:99px;font-weight:600;font-size:12.5px}
 .btn-hire:hover{background:#e4e4e7}
-@media(max-width:768px){.hd-nav .nav-link{display:none}}
+@media(max-width:768px){.hd-nav .nav-link{display:none}.hd-nav .nav-cross{display:inline;white-space:nowrap}.hd-sub{display:none}.btn-hire{white-space:nowrap;padding:9px 16px}}
 
 /* hero */
 .hero{position:relative;height:clamp(460px,72vh,640px);overflow:hidden}
@@ -46,10 +60,10 @@ html{scroll-behavior:smooth}
 .sel{padding:clamp(48px,8vw,80px) clamp(20px,5vw,48px) 28px}
 .sel-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:8px}
 .sel-head h2{margin:0;font-size:clamp(24px,3.5vw,32px);font-weight:700;letter-spacing:-.01em}
-.sel-grid{display:grid;grid-template-columns:1.6fr 1fr;grid-template-rows:1fr 1fr;gap:16px;height:540px}
-.sel-tile{position:relative;border-radius:14px;overflow:hidden;border:1px solid #1c1c1f;cursor:pointer;transition:border-color .2s}
+.sel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.sel-tile{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1px solid #1c1c1f;cursor:pointer;transition:border-color .2s}
 .sel-tile:hover{border-color:#52525b}
-.sel-tile.main{grid-row:1/3}
+.sel-tile.main{grid-column:1/-1;aspect-ratio:21/9}
 .sel-tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .sel-grad{position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.85))}
 .sel-cap{position:absolute;left:20px;right:20px;bottom:16px}
@@ -60,7 +74,36 @@ html{scroll-behavior:smooth}
 .sel-tile.main .sel-title{margin:0 0 4px;font-size:22px}
 .sel-meta{margin:0;font-size:11.5px;color:#a1a1aa}
 .sel-tile.main .sel-meta{font-size:12.5px}
-@media(max-width:768px){.sel-grid{grid-template-columns:1fr;grid-template-rows:none;gap:14px;height:auto}.sel-tile{aspect-ratio:16/10}.sel-tile.main{grid-row:auto}}
+@media(max-width:768px){.sel-grid{grid-template-columns:1fr;gap:14px}.sel-tile,.sel-tile.main{aspect-ratio:16/10}}
+
+/* credits strip */
+.creds{padding:clamp(28px,4vw,40px) clamp(20px,5vw,48px) 0}
+.creds h2{margin:0 0 18px;font-size:22px}
+.creds-list{display:flex;gap:12px;flex-wrap:wrap}
+.cred{display:flex;align-items:center;gap:12px;border:1px solid #27272a;border-radius:12px;padding:13px 20px;font-size:12.5px;color:#d4d4d8;transition:border-color .2s,background .2s}
+.cred:hover{border-color:#52525b;background:rgba(255,255,255,.05)}
+.cred-label{font-size:9.5px;font-weight:700;letter-spacing:.14em;color:#71717a;white-space:nowrap}
+.cred svg{width:16px;height:16px;fill:currentColor;flex-shrink:0;display:block}
+
+/* serif display type */
+.hd-name,
+.sel-head h2,
+.works-head h2,
+.creds h2,
+.about h2,
+.contact h2,
+.sel-title,
+.card-title,
+.lb-title{font-family:'Noto Serif JP',serif;font-weight:600}
+.hd-name{letter-spacing:.16em}
+.works-head h2,.creds h2,.about h2,.contact h2{letter-spacing:.04em}
+.sel-title,.card-title{letter-spacing:.01em}
+
+/* about */
+.about{padding:clamp(36px,6vw,56px) clamp(20px,5vw,48px);border-top:1px solid #1c1c1f}
+.about h2{margin:0 0 18px;font-size:22px}
+.about p{margin:0 0 10px;font-size:13.5px;line-height:1.9;color:#a1a1aa;max-width:760px}
+.about p strong{color:#fafafa;font-weight:600}
 
 /* works */
 .works{padding:clamp(40px,6vw,64px) clamp(20px,5vw,48px) 72px}
@@ -102,7 +145,9 @@ html{scroll-behavior:smooth}
 /* footer */
 .ft{padding:20px clamp(20px,5vw,48px);border-top:1px solid #141416;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:11.5px;color:#71717a}
 .ft a{color:#71717a}.ft a:hover{color:#fafafa}
-.ft-links{display:flex;gap:18px}
+.ft-links{display:flex;gap:20px;align-items:center}
+.ft-links a{display:inline-flex;align-items:center}
+.ft-links svg{width:19px;height:19px;fill:currentColor;display:block;transition:opacity .2s}
 
 /* lightbox */
 .lb{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;cursor:pointer}
@@ -123,66 +168,99 @@ html{scroll-behavior:smooth}
     <span class="hd-sub">AI FILM STUDIO</span>
   </a>
   <nav class="hd-nav">
-    <a href="#selected" class="nav-link">Selected</a>
-    <a href="#works" class="nav-link">All Works</a>
+    <a href="#selected" class="nav-link active">Video Works</a>
+    <a href="gallery.html" class="nav-link nav-cross">Image Works</a>
+    <a href="#about" class="nav-link">About</a>
     <a href="https://forms.gle/zLvEbzqVWQuzJLhJ7" target="_blank" rel="noopener" class="btn-hire">依頼する / Hire me</a>
   </nav>
 </header>
 
 <section class="hero" id="top">
-  <video src="videos/work-32-top.mp4" autoplay muted loop playsinline></video>
+  <video poster="posters/work-32-top.jpg" src="videos/work-32-top.mp4" autoplay muted defaultMuted loop playsinline webkit-playsinline preload="auto"></video>
   <div class="hero-grad"></div>
   <div class="hero-body">
-    <p class="hero-kicker">AI FILMMAKER — JAPAN</p>
-    <h1>映像を、依頼できる<br>AIクリエイター。</h1>
-    <p class="hero-lead">CM・MV・アニメーションをAIで制作。国内コンテスト応募多数。<br><span class="en">Commercial-ready AI video — CM, music videos and animation.</span></p>
+    <p class="hero-kicker">FOR BRANDS &amp; CREATORS</p>
+    <h1>商品広告、ショート動画。</h1>
+    <p class="hero-lead">企画から完成まで、AIで速く。<br>15秒の広告を、数日で形にします。</p>
     <div class="hero-ctas">
       <a href="https://forms.gle/zLvEbzqVWQuzJLhJ7" target="_blank" rel="noopener" class="btn-primary">制作の相談をする →</a>
-      <a href="#selected" class="btn-ghost">代表作を見る</a>
     </div>
   </div>
 </section>
 
 <section class="sel" id="selected">
-  <div class="sel-head">
-    <h2>SELECTED WORKS</h2>
-  </div>
   <div class="sel-grid">
     <div class="sel-tile main">
-      <video src="videos/work-33.mp4" autoplay muted loop playsinline></video>
+      <video poster="posters/work-41.jpg" src="videos/work-41.mp4" autoplay muted loop playsinline></video>
       <div class="sel-grad"></div>
       <div class="sel-cap">
-        <div class="sel-tags"><span class="sel-tag">CM</span><span class="sel-tag">Pollo</span></div>
-        <p class="sel-title">CLEAR FREE</p>
-        <p class="sel-meta">架空のノンアルコールドリンクCM · <span class="sel-dur">--:--</span></p>
+        <div class="sel-tags"><span class="sel-tag">架空CM</span></div>
+        <p class="sel-title">FREEZE</p>
+        <p class="sel-meta">スクランブル交差点の時間が止まる · <span class="sel-dur">--:--</span></p>
       </div>
     </div>
     <div class="sel-tile">
-      <video src="videos/work-30.mp4" autoplay muted loop playsinline preload="metadata"></video>
+      <video poster="posters/work-24.jpg" src="videos/work-24.mp4" muted loop playsinline preload="none"></video>
       <div class="sel-grad"></div>
       <div class="sel-cap">
-        <p class="sel-title">LIVE OPENING</p>
-        <p class="sel-meta">アニメヒット作にインスピレーションを受けて作った作品 · OiiOii · <span class="sel-dur">--:--</span></p>
+        <div class="sel-tags"><span class="sel-tag">架空CM</span></div>
+        <p class="sel-title">Just Create</p>
+        <p class="sel-meta">Don't wait for inspiration · <span class="sel-dur">--:--</span></p>
       </div>
     </div>
     <div class="sel-tile">
-      <video src="videos/work-31.mp4" autoplay muted loop playsinline preload="metadata"></video>
+      <video poster="posters/work-20.jpg" src="videos/work-20.mp4" muted loop playsinline preload="none"></video>
       <div class="sel-grad"></div>
       <div class="sel-cap">
-        <p class="sel-title">果まで届け</p>
-        <p class="sel-meta">縦型アニメ · OiiOii · <span class="sel-dur">--:--</span></p>
+        <p class="sel-title">視線の先に</p>
+        <p class="sel-meta">くりえみAIフィルムコンテスト応募作品 · <span class="sel-dur">--:--</span></p>
+      </div>
+    </div>
+    <div class="sel-tile">
+      <video poster="posters/work-22-top.jpg" src="videos/work-22-top.mp4" muted loop playsinline preload="none"></video>
+      <div class="sel-grad"></div>
+      <div class="sel-cap">
+        <div class="sel-tags"><span class="sel-tag">架空CM</span></div>
+        <p class="sel-title">KIOKKU</p>
+        <p class="sel-meta">今を、未来の記憶として撮る次世代メモリーカメラ · <span class="sel-dur">--:--</span></p>
+      </div>
+    </div>
+    <div class="sel-tile">
+      <video poster="posters/work-43.jpg" src="videos/work-43.mp4" muted loop playsinline preload="none"></video>
+      <div class="sel-grad"></div>
+      <div class="sel-cap">
+        <p class="sel-title">3人の世界が交わる瞬間</p>
+        <p class="sel-meta">3人のキャラクターの世界観を表現 · <span class="sel-dur">--:--</span></p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="works" id="works">
-  <div class="works-head">
-    <h2>ALL WORKS <span class="works-count" id="worksCount"></span></h2>
-    <div class="chips" id="chips"></div>
+<section class="creds">
+  <h2>SELECTED PRESS</h2>
+  <div class="creds-list">
+  <a class="cred" href="https://www.youtube.com/watch?v=hY3qp2EvDmk" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    <span class="cred-label">TV</span>
+    <span>テレビ朝日「AI大作戦」放送作品を見る →</span>
+  </a>
+  <a class="cred" href="https://ai-creators.tech/news/highlights/the-ai-mission/" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.26L21.6 9.2l-4.8 4.68 1.13 6.62L12 17.27 6.07 20.5l1.13-6.62L2.4 9.2l6.7-.94z"/></svg>
+    <span class="cred-label">CREATORS</span>
+    <span>AI Creators 公式ハイライト掲載 →</span>
+  </a>
+  <a class="cred" href="https://open.spotify.com/intl-ja/artist/4Ds6NolAi1hMfTA5KSnKSG" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+    <span class="cred-label">MUSIC</span>
+    <span>SUNOで生成した楽曲をSpotifyで配信中 →</span>
+  </a>
   </div>
-  <div class="grid" id="grid"></div>
-  <div class="more-wrap" id="moreWrap"><button class="btn-more" id="moreBtn">More ↓</button></div>
+</section>
+
+<section class="about" id="about">
+  <h2>ABOUT</h2>
+  <p>AIで<strong>商品広告・ショート動画</strong>を制作しています。</p>
+  <p>実写ではコストのかかる表現も、AIなら短いサイクルで複数パターン試せます。SNSの縦型からCMサイズまで対応。</p>
 </section>
 
 <section class="contact" id="contact">
@@ -199,9 +277,15 @@ html{scroll-behavior:smooth}
 <footer class="ft">
   <span>© 2026 SNOW LABS</span>
   <div class="ft-links">
-    <a href="https://x.com/nmkenji" target="_blank" rel="noopener">X (Twitter)</a>
-    <a href="https://www.youtube.com/@SnowLabs" target="_blank" rel="noopener">YouTube</a>
-    <a href="https://www.instagram.com/kenji0031/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.youtube.com/@SnowLabs" target="_blank" rel="noopener" aria-label="YouTube">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    </a>
+    <a href="https://x.com/nmkenji" target="_blank" rel="noopener" aria-label="X (Twitter)">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+    <a href="https://www.instagram.com/kenji0031/" target="_blank" rel="noopener" aria-label="Instagram">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+    </a>
   </div>
 </footer>
 
@@ -215,72 +299,18 @@ html{scroll-behavior:smooth}
 </div>
 
 <script>
-const WORKS = [
-  { id: 24, cat: 'cm', tool: 'Renoise', title: 'Just Create', desc: "Don't wait for inspiration — 架空ブランドCM", dur: '0:15' },
-  { id: 5, cat: 'cm', tool: 'Flova', title: 'Google Cloud 架空CM', desc: 'くりえみ AIフィルムコンテスト応募', dur: '0:28' },
-  { id: 7, cat: 'cinema', tool: 'Sora2', title: '予定外から人生は動き出す', desc: 'くりえみ AIフィルムコンテスト応募', dur: '0:41' },
-  { id: 2, cat: 'anime', tool: 'OiiOii', title: '春の一瞬', desc: '桜舞い散る季節の一枚を撮ろうとする少女', dur: '0:22' },
-  { id: 9, cat: 'anime', tool: 'OiiOii', title: '再会', desc: 'PIXTA Neo Anime Award 応募', dur: '0:36' },
-  { id: 1, cat: 'mv', tool: 'Flova', title: 'ラムネ', desc: 'SUNO楽曲MV · Spotify配信中', dur: '0:38' },
-  { id: 3, cat: 'anime', tool: 'Sora2', title: '初めてのお手前', desc: '和のテイストを入れたアニメ', dur: '0:45' },
-  { id: 14, cat: 'mv', tool: 'Sora2', title: 'キャラクターMV', desc: 'Sora2を使ったMusic Video', dur: '0:44' },
-  { id: 20, cat: 'cinema', tool: 'Flova', title: '視線の先に', desc: 'くりえみ AIフィルムコンテスト応募', dur: '0:15' },
-  { id: 8, cat: 'other', tool: 'OiiOii', title: 'ハリウッド猫カーチェイス', desc: 'AI猫の日 にゃんにゃんにゃん 応募', dur: '1:02' },
-  { id: 19, cat: 'anime', tool: 'Vidu', title: 'BIKE', desc: 'Viduコンテスト応募作品', dur: '0:35' },
-  { id: 29, cat: 'anime', tool: 'LTX', title: 'Beyond the Horizon', desc: 'Project Odyssey AI Film Competition 応募', dur: '0:15' },
-  { id: 22, cat: 'other', tool: 'Pollo', title: 'Shibuya Crossing', desc: 'Polloコンテスト応募作品', dur: '0:15' },
-  { id: 12, cat: 'cinema', tool: 'Sora2', title: '日本', desc: '日本の都市巡り', dur: '0:55' },
-  { id: 21, cat: 'anime', tool: 'Pollo', title: '架空のゲームオープニング', desc: 'ゲームOP風映像', dur: '0:15' },
-  { id: 25, cat: 'other', tool: 'Seedance2.0', title: 'FPS', desc: 'FPSをするVtuber', dur: '0:15' },
-];
-const CATS = { all: 'All', cm: 'CM', mv: 'MV', anime: 'Anime', cinema: 'Cinematic', other: 'Other' };
-const src = (w) => 'videos/work-' + w.id + '.mp4';
-const INITIAL_COUNT = 4;
-let filter = 'all';
-let expanded = false;
-
-const chipsEl = document.getElementById('chips');
-const gridEl = document.getElementById('grid');
-document.getElementById('worksCount').textContent = WORKS.length;
-
-function renderChips() {
-  chipsEl.innerHTML = '';
-  for (const c of Object.keys(CATS)) {
-    const b = document.createElement('button');
-    b.className = 'chip' + (c === filter ? ' active' : '');
-    b.textContent = CATS[c];
-    b.onclick = () => { filter = c; expanded = false; renderChips(); renderGrid(); };
-    chipsEl.appendChild(b);
-  }
-}
-
-function renderGrid() {
-  gridEl.innerHTML = '';
-  const all = filter === 'all' ? WORKS : WORKS.filter(w => w.cat === filter);
-  const list = expanded ? all : all.slice(0, INITIAL_COUNT);
-  document.getElementById('moreWrap').style.display = (!expanded && all.length > INITIAL_COUNT) ? 'flex' : 'none';
-  for (const w of list) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML =
-      '<div class="card-thumb">' +
-        '<video src="' + src(w) + '#t=0.001" muted loop playsinline preload="metadata"></video>' +
-        '<div class="card-grad"></div>' +
-        '<span class="badge cat">' + CATS[w.cat] + '</span>' +
-        '<span class="badge tool">' + w.tool + '</span>' +
-        '<span class="badge dur">--:--</span>' +
-      '</div>' +
-      '<div class="card-body"><p class="card-title">' + w.title + '</p><p class="card-desc">' + w.desc + '</p></div>';
-    const durBadge = card.querySelector('.badge.dur');
-    const cardVideo = card.querySelector('video');
-    const setDur = () => { w.dur = fmtDur(cardVideo.duration); durBadge.textContent = w.dur; };
-    if (cardVideo.readyState >= 1) setDur(); else cardVideo.addEventListener('loadedmetadata', setDur);
-    card.onclick = () => openLightbox({ srcUrl: src(w), title: w.title, meta: CATS[w.cat] + ' · ' + w.tool + ' · ' + w.dur });
-    card.onmouseenter = () => { const v = card.querySelector('video'); if (v) v.play().catch(() => {}); };
-    card.onmouseleave = () => { const v = card.querySelector('video'); if (v) { v.pause(); v.currentTime = 0; } };
-    gridEl.appendChild(card);
-  }
-}
+/* モバイルの自動再生ブロック対策: 失敗したら最初の操作で再試行 */
+(function () {
+  const hv = document.querySelector('.hero video');
+  if (!hv) return;
+  hv.muted = true;
+  const tryPlay = () => { const p = hv.play(); if (p) p.catch(() => {}); };
+  tryPlay();
+  hv.addEventListener('loadeddata', tryPlay, { once: true });
+  ['touchstart', 'pointerdown', 'scroll'].forEach(ev =>
+    document.addEventListener(ev, tryPlay, { once: true, passive: true })
+  );
+})();
 
 const lb = document.getElementById('lightbox');
 const lbVideo = document.getElementById('lbVideo');
@@ -311,6 +341,10 @@ document.querySelectorAll('.sel-tile').forEach(t => {
     const setDur = () => { durEl.textContent = fmtDur(v.duration); };
     if (v.readyState >= 1) setDur(); else v.addEventListener('loadedmetadata', setDur);
   }
+  if (v && !v.hasAttribute('autoplay')) {
+    t.onmouseenter = () => v.play().catch(() => {});
+    t.onmouseleave = () => { v.pause(); v.currentTime = 0; };
+  }
   t.onclick = () => {
     const srcUrl = v.getAttribute('src');
     const title = t.querySelector('.sel-title').textContent;
@@ -318,11 +352,6 @@ document.querySelectorAll('.sel-tile').forEach(t => {
     openLightbox({ srcUrl, title, meta });
   };
 });
-
-document.getElementById('moreBtn').onclick = () => { expanded = true; renderGrid(); };
-
-renderChips();
-renderGrid();
 </script>
 </body>
 </html>

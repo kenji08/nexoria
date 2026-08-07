@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNOW LABS — AI Graphic Works</title>
+<meta name="description" content="AI-generated graphic works: fashion visuals, brand posters, character design, game art & more.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SNOW LABS">
+<meta property="og:url" content="https://nexoria.lomo.jp/aiportfolio/gallery.html">
+<meta property="og:title" content="SNOW LABS — AI Graphic Works">
+<meta property="og:description" content="AI-generated graphic works: fashion visuals, brand posters, character design, game art & more.">
+<meta property="og:image" content="https://nexoria.lomo.jp/aiportfolio/images/poster-fashion.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+/* ---- RESET & BASE ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #000;
+  --bg-card: #101010;
+  --border: #1e1e1e;
+  --border-hover: #3f3f46;
+  --text: #fafafa;
+  --text-sec: #a1a1aa;
+  --text-muted: #52525b;
+  --ease: cubic-bezier(.16,1,.3,1);
+  --header-h: 68px;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 99px; }
+
+/* ---- HEADER ---- */
+.hd {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--header-h); z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 clamp(20px,4vw,48px);
+  background: rgba(0,0,0,.82);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  transition: border-color .3s;
+}
+.hd-logo { display: flex; align-items: baseline; gap: 10px; }
+.hd-name {
+  font-weight: 700; font-size: 15px; letter-spacing: .16em;
+  font-family: 'Cormorant Garamond', serif;
+}
+.hd-sub { font-size: 10.5px; color: var(--text-muted); letter-spacing: .1em; }
+.hd-nav { display: flex; align-items: center; gap: clamp(10px,2.5vw,24px); font-size: 13px; }
+.hd-nav a { color: var(--text-sec); transition: color .2s; }
+.hd-nav a:hover, .hd-nav a.active { color: var(--text); }
+.btn-hire {
+  background: #fff; color: #000 !important;
+  padding: 9px 20px; border-radius: 99px;
+  font-weight: 600; font-size: 12px; letter-spacing: .02em;
+  transition: background .2s, transform .2s;
+}
+.btn-hire:hover { background: #e4e4e7; transform: translateY(-1px); }
+@media(max-width:640px) { .hd-nav .nav-link { display: none; } .hd-nav .nav-cross { display: inline; } }
+
+/* ---- HERO ---- */
+.hero {
+  padding-top: var(--header-h);
+  min-height: 52vh;
+  display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: flex-end;
+  padding-bottom: clamp(36px,6vh,72px);
+  padding-left: clamp(20px,5vw,64px);
+  padding-right: clamp(20px,5vw,64px);
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #050505 0%, #000 100%);
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 70% at 80% 40%, rgba(255,255,255,.025) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 20% 80%, rgba(255,255,255,.015) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-kicker {
+  font-size: 10.5px; letter-spacing: .28em; color: var(--text-muted);
+  font-weight: 500; text-transform: uppercase; margin-bottom: 20px;
+  animation: fadeUp .9s var(--ease) .1s both;
+}
+.hero h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.4rem, 6vw, 5.5rem);
+  font-weight: 300; line-height: 1.1; letter-spacing: .01em;
+  color: #fff; margin-bottom: 22px;
+  animation: fadeUp 1.1s var(--ease) .25s both;
+}
+.hero h1 em { font-style: italic; opacity: .6; display: block; font-size: .88em; margin-top: 8px; }
+.hero-lead {
+  font-size: clamp(12px, 1.4vw, 14px); color: var(--text-sec);
+  line-height: 1.9; max-width: 540px;
+  animation: fadeUp 1.1s var(--ease) .4s both;
+}
+.hero-divider {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, #1e1e1e 20%, #1e1e1e 80%, transparent);
+}
+
+/* ---- FILTER BAR ---- */
+.filter-bar {
+  position: sticky; top: var(--header-h); z-index: 80;
+  background: rgba(0,0,0,.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.filter-inner {
+  max-width: 1440px; margin: 0 auto;
+  padding: 12px clamp(20px,4vw,48px);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.filter-label { font-size: 10.5px; letter-spacing: .12em; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  padding: 5px 14px; border-radius: 99px; cursor: pointer;
+  font-size: 11.5px; font-weight: 500; font-family: inherit;
+  border: 1px solid var(--border); background: transparent; color: var(--text-sec);
+  transition: all .2s; white-space: nowrap;
+}
+.chip:hover { border-color: var(--border-hover); color: var(--text); }
+.chip.active { background: #fff; color: #000; border-color: #fff; font-weight: 600; }
+.count-badge {
+  margin-left: auto; font-size: 11px; color: var(--text-muted);
+  letter-spacing: .06em; white-space: nowrap;
+}
+
+/* ---- MASONRY GRID ---- */
+.gallery-section {
+  max-width: 1440px; margin: 0 auto;
+  padding: 36px clamp(16px,4vw,48px) 80px;
+}
+.masonry {
+  columns: 4 280px;
+  column-gap: 14px;
+}
+.item {
+  break-inside: avoid;
+  margin-bottom: 14px;
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  position: relative;
+  transition: border-color .3s var(--ease), transform .3s var(--ease), box-shadow .3s var(--ease);
+  animation: fadeUp .5s var(--ease) both;
+}
+.item:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px -8px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.06);
+}
+.item.hidden { display: none; }
+.item img {
+  width: 100%; display: block;
+  transition: transform .5s var(--ease), filter .4s;
+  filter: brightness(.92);
+}
+.item:hover img {
+  transform: scale(1.03);
+  filter: brightness(1);
+}
+.item-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 45%);
+  opacity: 0; transition: opacity .3s;
+}
+.item:hover .item-overlay { opacity: 1; }
+.item-cap {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 20px 16px 14px;
+  transform: translateY(6px); opacity: 0;
+  transition: transform .3s var(--ease), opacity .3s;
+}
+.item:hover .item-cap { transform: translateY(0); opacity: 1; }
+.item-tag {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  background: rgba(255,255,255,.14); backdrop-filter: blur(6px);
+  padding: 3px 9px; border-radius: 99px; margin-bottom: 6px;
+}
+.item-title { font-size: 13px; font-weight: 600; line-height: 1.35; }
+.item-desc { font-size: 11px; color: rgba(255,255,255,.65); margin-top: 2px; line-height: 1.5; }
+
+/* Top badge (always visible) */
+.item-badge {
+  position: absolute; top: 10px; left: 10px;
+  font-size: 9px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.12);
+  padding: 3px 9px; border-radius: 99px; color: #d4d4d8;
+}
+
+/* Staggered animation */
+.item:nth-child(1){animation-delay:.04s}
+.item:nth-child(2){animation-delay:.08s}
+.item:nth-child(3){animation-delay:.12s}
+.item:nth-child(4){animation-delay:.16s}
+.item:nth-child(5){animation-delay:.20s}
+.item:nth-child(6){animation-delay:.24s}
+.item:nth-child(7){animation-delay:.28s}
+.item:nth-child(8){animation-delay:.32s}
+.item:nth-child(9){animation-delay:.36s}
+.item:nth-child(10){animation-delay:.40s}
+.item:nth-child(11){animation-delay:.44s}
+.item:nth-child(12){animation-delay:.48s}
+
+/* ---- ABOUT ---- */
+.about-strip {
+  border-top: 1px solid var(--border);
+  padding: clamp(48px,7vw,80px) clamp(20px,5vw,64px);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;
+  max-width: 1200px; margin: 0 auto;
+}
+@media(max-width:768px){ .about-strip { grid-template-columns: 1fr; gap: 40px; } }
+.about-eyebrow { font-size: 10.5px; letter-spacing: .2em; color: var(--text-muted); font-weight: 600; margin-bottom: 18px; }
+.about-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  font-weight: 300; line-height: 1.2; margin-bottom: 20px;
+}
+.about-body { font-size: 13.5px; line-height: 1.9; color: var(--text-sec); }
+.about-body strong { color: var(--text); font-weight: 600; }
+.caps-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.cap-tag {
+  padding: 6px 14px; border-radius: 99px;
+  font-size: 11.5px; color: var(--text-sec);
+  border: 1px solid var(--border);
+  transition: border-color .2s, color .2s;
+}
+.cap-tag:hover { border-color: var(--border-hover); color: var(--text); }
+
+/* ---- CONTACT ---- */
+.contact-strip {
+  border-top: 1px solid var(--border);
+  padding: clamp(48px,7vw,80px) clamp(20px,5vw,64px);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 28px;
+  background: radial-gradient(ellipse 50% 80% at 50% 100%, rgba(255,255,255,.03) 0%, transparent 60%);
+}
+.contact-strip h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.8rem,3.5vw,3rem); font-weight: 300;
+  margin-bottom: 10px;
+}
+.contact-strip p { font-size: 13px; color: var(--text-sec); }
+.contact-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-primary {
+  background: #fff; color: #000;
+  padding: 14px 32px; border-radius: 99px;
+  font-weight: 600; font-size: 13.5px;
+  transition: transform .2s, background .2s;
+}
+.btn-primary:hover { transform: translateY(-2px); background: #f0f0f0; }
+.btn-ghost {
+  border: 1px solid var(--border-hover); color: var(--text);
+  padding: 14px 32px; border-radius: 99px;
+  font-weight: 600; font-size: 13.5px;
+  background: rgba(255,255,255,.05);
+  transition: background .2s, transform .2s;
+}
+.btn-ghost:hover { background: rgba(255,255,255,.1); transform: translateY(-2px); }
+
+/* ---- FOOTER ---- */
+.ft {
+  border-top: 1px solid #111;
+  padding: 22px clamp(20px,4vw,48px);
+  display: flex; justify-content: space-between; flex-wrap: wrap;
+  gap: 10px; font-size: 11px; color: var(--text-muted);
+}
+.ft a { color: var(--text-muted); transition: color .2s; }
+.ft a:hover { color: var(--text); }
+.ft-links { display: flex; gap: 20px; align-items: center; }
+.ft-links svg { width: 18px; height: 18px; fill: currentColor; display: block; }
+
+/* ---- LIGHTBOX ---- */
+.lb-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+  display: flex; align-items: center; justify-content: center;
+}
+.lb-overlay.open { opacity: 1; pointer-events: all; }
+.lb-box {
+  position: relative;
+  max-width: min(92vw, 1000px);
+  max-height: 90vh;
+  transform: scale(.94); opacity: 0;
+  transition: transform .35s var(--ease), opacity .35s;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.lb-overlay.open .lb-box { transform: scale(1); opacity: 1; }
+.lb-img-wrap {
+  border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 30px 80px rgba(0,0,0,.8);
+  max-height: 80vh; display: flex;
+}
+.lb-img-wrap img {
+  max-width: 100%; max-height: 80vh;
+  object-fit: contain; display: block;
+}
+.lb-cap-box { text-align: center; }
+.lb-tag {
+  display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+}
+.lb-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.lb-desc { font-size: 12.5px; color: var(--text-sec); line-height: 1.6; }
+.lb-close {
+  position: fixed; top: 18px; right: 24px; z-index: 210;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+  color: #fff; font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+.lb-close:hover { background: rgba(255,255,255,.2); }
+.lb-nav {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  z-index: 210;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  color: #fff; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+.lb-nav:hover { background: rgba(255,255,255,.16); }
+.lb-prev { left: 16px; }
+.lb-next { right: 16px; }
+
+/* ---- ANIMATIONS ---- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hd" id="top">
+  <a href="#top" class="hd-logo">
+    <span class="hd-name">SNOW LABS</span>
+    <span class="hd-sub">AI GRAPHIC WORKS</span>
+  </a>
+  <nav class="hd-nav">
+    <a href="index.html" class="nav-link nav-cross">Video Works</a>
+    <a href="gallery.html" class="nav-link active">Image Works</a>
+    <a href="https://x.com/nmkenji" target="_blank" rel="noopener" class="btn-hire">Contact</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-kicker">AI IMAGE GENERATION · GRAPHIC DESIGN</p>
+  <h1>
+    Graphic Works
+    <em>Posters · Characters · Brand Visuals</em>
+  </h1>
+  <p class="hero-lead">
+    Fashion campaigns, brand identities, character design, game art — 
+    all crafted with generative AI. Exploring what's possible at the intersection of 
+    design thinking and machine imagination.
+  </p>
+  <div class="hero-divider"></div>
+</section>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="filter-inner">
+    <span class="filter-label">FILTER</span>
+    <div class="chips" id="chips">
+      <button class="chip active" data-cat="all" id="chip-all">All</button>
+      <button class="chip" data-cat="fashion" id="chip-fashion">Fashion</button>
+      <button class="chip" data-cat="poster" id="chip-poster">Poster / Ad</button>
+      <button class="chip" data-cat="character" id="chip-character">Character</button>
+      <button class="chip" data-cat="game" id="chip-game">Game / Anime</button>
+      <button class="chip" data-cat="product" id="chip-product">Product</button>
+    </div>
+    <span class="count-badge" id="count-badge">12 works</span>
+  </div>
+</div>
+
+<!-- GALLERY -->
+<section class="gallery-section">
+  <div class="masonry" id="masonry">
+
+    <!-- Fashion Poster (tall/portrait) -->
+    <div class="item" data-cat="fashion" data-index="0"
+         data-title="LILINOA — Fashion Campaign"
+         data-desc="何気ない日が、特別になる。— Full-length fashion ad for a fictional Japanese brand."
+         data-tag="Fashion">
+      <span class="item-badge">Fashion</span>
+      <img src="images/poster-fashion.png" alt="LILINOA fashion campaign" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Fashion</span>
+        <p class="item-title">LILINOA — Fashion Campaign</p>
+        <p class="item-desc">何気ない日が、特別になる。</p>
+      </div>
+    </div>
+
+    <!-- Commercial Poster (landscape) -->
+    <div class="item" data-cat="poster" data-index="1"
+         data-title="SUI — Mineral Water Ad"
+         data-desc="わたしの、水。— Fictional CM visual for a premium mineral water brand."
+         data-tag="Poster / Ad">
+      <span class="item-badge">Poster / Ad</span>
+      <img src="images/Poster-Commercial.png" alt="SUI mineral water commercial poster" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Poster / Ad</span>
+        <p class="item-title">SUI — Mineral Water Ad</p>
+        <p class="item-desc">わたしの、水。Fictional CM visual.</p>
+      </div>
+    </div>
+
+    <!-- Movie Poster (portrait) -->
+    <div class="item" data-cat="poster" data-index="2"
+         data-title="光の行方 — Movie Poster"
+         data-desc="Where the Light Leads — Fictional film poster. Festival selection artwork."
+         data-tag="Poster / Ad">
+      <span class="item-badge">Poster / Ad</span>
+      <img src="images/Poster-movie.png" alt="Movie poster — 光の行方" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Poster / Ad</span>
+        <p class="item-title">光の行方 — Movie Poster</p>
+        <p class="item-desc">Fictional film festival artwork.</p>
+      </div>
+    </div>
+
+    <!-- Character Sheet -->
+    <div class="item" data-cat="character" data-index="3"
+         data-title="リオナ・シアン — Character Sheet"
+         data-desc="Riona Cyan · Cyan Reaper. Full character design sheet with expressions, outfit & parts detail."
+         data-tag="Character">
+      <span class="item-badge">Character</span>
+      <img src="images/Character01.png" alt="Riona Cyan character sheet" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Character</span>
+        <p class="item-title">リオナ・シアン — Character Sheet</p>
+        <p class="item-desc">Full design sheet with expressions & outfit.</p>
+      </div>
+    </div>
+
+    <!-- Character Illustration -->
+    <div class="item" data-cat="character" data-index="4"
+         data-title="Riona Cyan — Key Visual"
+         data-desc="High-impact character art with typographic layout. Street-meets-tactical fashion design."
+         data-tag="Character">
+      <span class="item-badge">Character</span>
+      <img src="images/vidu-image-3298895081629532.png" alt="Riona Cyan key visual" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Character</span>
+        <p class="item-title">Riona Cyan — Key Visual</p>
+        <p class="item-desc">Typographic character poster. Tactical streetwear design.</p>
+      </div>
+    </div>
+
+    <!-- Game TPS -->
+    <div class="item" data-cat="game" data-index="5"
+         data-title="AEGIS — TPS Game Art"
+         data-desc="Futuristic third-person shooter key art. Photorealistic game environment concept."
+         data-tag="Game / Anime">
+      <span class="item-badge">Game / Anime</span>
+      <img src="images/game-tps.png" alt="AEGIS TPS game art" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Game / Anime</span>
+        <p class="item-title">AEGIS — TPS Key Art</p>
+        <p class="item-desc">Futuristic open-world game environment.</p>
+      </div>
+    </div>
+
+    <!-- Game Anime -->
+    <div class="item" data-cat="game" data-index="6"
+         data-title="Fantasy World — Anime BG"
+         data-desc="Crystal tower dreamscape. Anime-style background art with floating islands."
+         data-tag="Game / Anime">
+      <span class="item-badge">Game / Anime</span>
+      <img src="images/game-anime.png" alt="Fantasy anime background" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Game / Anime</span>
+        <p class="item-title">Fantasy World — Anime BG</p>
+        <p class="item-desc">Crystal tower dreamscape with floating islands.</p>
+      </div>
+    </div>
+
+    <!-- Sports wear poster -->
+    <div class="item" data-cat="fashion" data-index="7"
+         data-title="LORIEN — Sportswear Visual"
+         data-desc="Athletic fashion brand visual. Stadium dusk mood with performance wear."
+         data-tag="Fashion">
+      <span class="item-badge">Fashion</span>
+      <img src="images/Poster-Sports-wear.png" alt="LORIEN sportswear visual" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Fashion</span>
+        <p class="item-title">LORIEN — Sportswear Visual</p>
+        <p class="item-desc">Athletic brand. Stadium dusk mood.</p>
+      </div>
+    </div>
+
+    <!-- Cover Art -->
+    <div class="item" data-cat="poster" data-index="8"
+         data-title="あの星まで、届くメロディ — Cover Art"
+         data-desc="Music cover art. Pixel-art cityscape with lofi anime aesthetic. Chiptune × EDM × J-POP."
+         data-tag="Poster / Ad">
+      <span class="item-badge">Cover Art</span>
+      <img src="images/coverart.png" alt="Music cover art — あの星まで、届くメロディ" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Cover Art</span>
+        <p class="item-title">あの星まで、届くメロディ</p>
+        <p class="item-desc">Pixel lofi cityscape. Chiptune × EDM × J-POP.</p>
+      </div>
+    </div>
+
+    <!-- Illust -->
+    <div class="item" data-cat="game" data-index="9"
+         data-title="Lofi Room — Illustration"
+         data-desc="Warm anime room illustration. Soft light and daily life aesthetic."
+         data-tag="Game / Anime">
+      <span class="item-badge">Illustration</span>
+      <img src="images/illust.png" alt="Lofi room illustration" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Illustration</span>
+        <p class="item-title">Lofi Room — Illustration</p>
+        <p class="item-desc">Warm anime aesthetic. Soft daily life scene.</p>
+      </div>
+    </div>
+
+    <!-- Product -->
+    <div class="item" data-cat="product" data-index="10"
+         data-title="SUU — Product Design Sheet"
+         data-desc="Rhythm Reset Tablet. Full packaging design with sizes, specs and product photography."
+         data-tag="Product">
+      <span class="item-badge">Product</span>
+      <img src="images/product-idea.png" alt="SUU product design sheet" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Product</span>
+        <p class="item-title">SUU — Packaging Design</p>
+        <p class="item-desc">Product sheet with specs & photography mock.</p>
+      </div>
+    </div>
+
+    <!-- Storyboard -->
+    <div class="item" data-cat="poster" data-index="11"
+         data-title="World Cup CM — Storyboard"
+         data-desc="One moment. One passion. 15-second commercial storyboard with 9 cuts."
+         data-tag="Storyboard">
+      <span class="item-badge">Storyboard</span>
+      <img src="images/Storyboard-worldcup.png" alt="World Cup CM storyboard" loading="lazy">
+      <div class="item-overlay"></div>
+      <div class="item-cap">
+        <span class="item-tag">Storyboard</span>
+        <p class="item-title">World Cup CM — Storyboard</p>
+        <p class="item-desc">One moment. One passion. 15s · 9 cuts.</p>
+      </div>
+    </div>
+
+  </div><!-- /masonry -->
+</section>
+
+<!-- ABOUT -->
+<section style="border-top:1px solid var(--border)">
+  <div class="about-strip">
+    <div>
+      <p class="about-eyebrow">ABOUT THE WORK</p>
+      <h2 class="about-title">Design × AI<br>From Prompt to Pixel</h2>
+      <p class="about-body">
+        All visuals are generated and art-directed by <strong>nmkenji (SNOW LABS)</strong>. 
+        Every image starts with concept and intent — the AI is a tool, not the author.<br><br>
+        The portfolio spans fashion campaigns, brand identity, character design, game art, 
+        and product visualization. Available for remote collaboration on 
+        <strong>fashion, brand, streetwear, and creative projects</strong>.
+      </p>
+    </div>
+    <div>
+      <p class="about-eyebrow">CAPABILITIES</p>
+      <div class="caps-list">
+        <span class="cap-tag">Fashion Campaign</span>
+        <span class="cap-tag">Brand Identity</span>
+        <span class="cap-tag">Streetwear Visual</span>
+        <span class="cap-tag">Character Design</span>
+        <span class="cap-tag">Game Art</span>
+        <span class="cap-tag">Poster / Ad</span>
+        <span class="cap-tag">Product Mockup</span>
+        <span class="cap-tag">Cover Art</span>
+        <span class="cap-tag">Storyboard</span>
+        <span class="cap-tag">Concept Art</span>
+        <span class="cap-tag">Midjourney</span>
+        <span class="cap-tag">Flux</span>
+        <span class="cap-tag">Firefly</span>
+        <span class="cap-tag">Gemini</span>
+      </div>
+      <div style="margin-top:24px">
+        <a href="index.html" style="font-size:12.5px;color:var(--text-sec);border-bottom:1px solid var(--border-hover);padding-bottom:2px;transition:color .2s"
+           onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">
+          → View Video Works
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-strip">
+  <div>
+    <h2>Let's build something together.</h2>
+    <p>Fashion, brand, streetwear — open for remote collaboration.</p>
+  </div>
+  <div class="contact-btns">
+    <a href="https://x.com/nmkenji" target="_blank" rel="noopener" class="btn-primary">X (Twitter) DM</a>
+    <a href="https://forms.gle/zLvEbzqVWQuzJLhJ7" target="_blank" rel="noopener" class="btn-ghost">Send a message</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="ft">
+  <span>© 2026 SNOW LABS · nmkenji</span>
+  <div class="ft-links">
+    <a href="https://x.com/nmkenji" target="_blank" rel="noopener" aria-label="X (Twitter)">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+    <a href="https://www.instagram.com/kenji0031/" target="_blank" rel="noopener" aria-label="Instagram">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+    </a>
+  </div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lb-overlay" id="lbOverlay" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <button class="lb-close" id="lbClose" aria-label="Close">×</button>
+  <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous">‹</button>
+  <button class="lb-nav lb-next" id="lbNext" aria-label="Next">›</button>
+  <div class="lb-box">
+    <div class="lb-img-wrap">
+      <img id="lbImg" src="" alt="">
+    </div>
+    <div class="lb-cap-box">
+      <p class="lb-tag" id="lbTag"></p>
+      <p class="lb-title" id="lbTitle"></p>
+      <p class="lb-desc" id="lbDesc"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- FILTER ---- */
+const items = Array.from(document.querySelectorAll('.item'));
+const chips = document.querySelectorAll('.chip');
+const countBadge = document.getElementById('count-badge');
+
+function updateCount() {
+  const visible = items.filter(i => !i.classList.contains('hidden')).length;
+  countBadge.textContent = visible + ' work' + (visible !== 1 ? 's' : '');
+}
+
+chips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    chips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    const cat = chip.dataset.cat;
+    items.forEach(item => {
+      if (cat === 'all' || item.dataset.cat === cat) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+    updateCount();
+  });
+});
+updateCount();
+
+/* ---- LIGHTBOX ---- */
+const overlay = document.getElementById('lbOverlay');
+const lbImg   = document.getElementById('lbImg');
+const lbTag   = document.getElementById('lbTag');
+const lbTitle = document.getElementById('lbTitle');
+const lbDesc  = document.getElementById('lbDesc');
+let currentIdx = 0;
+
+function getVisible() {
+  return items.filter(i => !i.classList.contains('hidden'));
+}
+
+function openLb(item) {
+  const visible = getVisible();
+  currentIdx = visible.indexOf(item);
+  showItem(visible[currentIdx]);
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function showItem(item) {
+  const img = item.querySelector('img');
+  lbImg.src = img.src;
+  lbImg.alt = img.alt;
+  lbTag.textContent = item.dataset.tag || '';
+  lbTitle.textContent = item.dataset.title || '';
+  lbDesc.textContent = item.dataset.desc || '';
+}
+
+function closeLb() {
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  lbImg.src = '';
+}
+
+function navigate(dir) {
+  const visible = getVisible();
+  if (!visible.length) return;
+  currentIdx = (currentIdx + dir + visible.length) % visible.length;
+  showItem(visible[currentIdx]);
+}
+
+items.forEach(item => {
+  item.addEventListener('click', () => openLb(item));
+  item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLb(item); } });
+  item.setAttribute('tabindex', '0');
+  item.setAttribute('role', 'button');
+});
+
+document.getElementById('lbClose').addEventListener('click', closeLb);
+document.getElementById('lbPrev').addEventListener('click', e => { e.stopPropagation(); navigate(-1); });
+document.getElementById('lbNext').addEventListener('click', e => { e.stopPropagation(); navigate(1); });
+
+overlay.addEventListener('click', e => {
+  if (e.target === overlay) closeLb();
+});
+
+document.addEventListener('keydown', e => {
+  if (!overlay.classList.contains('open')) return;
+  if (e.key === 'Escape') closeLb();
+  if (e.key === 'ArrowLeft') navigate(-1);
+  if (e.key === 'ArrowRight') navigate(1);
+});
+
+/* Touch swipe */
+let touchX = null;
+overlay.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+overlay.addEventListener('touchend', e => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 50) navigate(dx < 0 ? 1 : -1);
+  touchX = null;
+}, { passive: true });
+</script>
+</body>
+</html>
