@@ -76,6 +76,21 @@ html{scroll-behavior:smooth}
 .sel-tile.main .sel-meta{font-size:12.5px}
 @media(max-width:768px){.sel-grid{grid-template-columns:1fr;gap:14px}.sel-tile,.sel-tile.main{aspect-ratio:16/10}}
 
+/* vfx */
+.vfx{padding:clamp(40px,6vw,64px) clamp(20px,5vw,48px) 0}
+.vfx-head{margin-bottom:8px}
+.vfx-head h2{margin:0 0 10px;font-size:22px}
+.vfx-lead{margin:0 0 24px;font-size:13.5px;line-height:1.9;color:#a1a1aa;max-width:760px}
+.vfx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),620px));justify-content:start;gap:18px}
+.vfx-item{border:1px solid #1c1c1f;border-radius:14px;overflow:hidden;background:#0b0b0d;transition:border-color .2s}
+.vfx-item:hover{border-color:#52525b}
+.vfx-thumb{position:relative;aspect-ratio:16/9;cursor:pointer;background:#000}
+.vfx-thumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.vfx-body{padding:14px 18px 16px}
+.vfx-title{margin:0 0 4px;font-size:15px;font-weight:600}
+.vfx-desc{margin:0;font-size:12px;color:#71717a;line-height:1.7}
+.vfx-tag{display:inline-block;margin-bottom:9px;font-size:10px;font-weight:700;letter-spacing:.12em;color:#71717a;border:1px solid #27272a;border-radius:99px;padding:3px 10px}
+
 /* credits strip */
 .creds{padding:clamp(28px,4vw,40px) clamp(20px,5vw,48px) 0}
 .creds h2{margin:0 0 18px;font-size:22px}
@@ -90,13 +105,14 @@ html{scroll-behavior:smooth}
 .sel-head h2,
 .works-head h2,
 .creds h2,
+.vfx-head h2,
 .about h2,
 .contact h2,
 .sel-title,
 .card-title,
 .lb-title{font-family:'Noto Serif JP',serif;font-weight:600}
 .hd-name{letter-spacing:.16em}
-.works-head h2,.creds h2,.about h2,.contact h2{letter-spacing:.04em}
+.works-head h2,.creds h2,.vfx-head h2,.about h2,.contact h2{letter-spacing:.04em}
 .sel-title,.card-title{letter-spacing:.01em}
 
 /* about */
@@ -236,6 +252,25 @@ html{scroll-behavior:smooth}
   </div>
 </section>
 
+<section class="vfx" id="vfx">
+  <div class="vfx-head">
+    <h2>VFX / 映像加工</h2>
+    <p class="vfx-lead">撮影済みの素材をAIで加工します。観客の追加、ライティング・天候の変更など、実写を活かしたまま画づくりを変える処理に対応。</p>
+  </div>
+  <div class="vfx-grid">
+    <div class="vfx-item">
+      <div class="vfx-thumb">
+        <video poster="posters/vfx-01.jpg" src="videos/vfx-01.mp4" muted loop playsinline preload="none"></video>
+      </div>
+      <div class="vfx-body">
+        <span class="vfx-tag">CROWD</span>
+        <p class="vfx-title">観客を増やす</p>
+        <p class="vfx-desc">実写のスタジアム映像に観客を追加。元素材の構図・カメラワークはそのまま維持しています。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="creds">
   <h2>SELECTED PRESS</h2>
   <div class="creds-list">
@@ -334,6 +369,19 @@ function fmtDur(sec) {
   sec = Math.floor(sec);
   return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
 }
+document.querySelectorAll('.vfx-item').forEach(item => {
+  const v = item.querySelector('video');
+  const thumb = item.querySelector('.vfx-thumb');
+  if (!v || !thumb) return;
+  thumb.onmouseenter = () => { v.play().catch(() => {}); };
+  thumb.onmouseleave = () => { v.pause(); v.currentTime = 0; };
+  thumb.onclick = () => openLightbox({
+    srcUrl: v.getAttribute('src'),
+    title: item.querySelector('.vfx-title').textContent,
+    meta: item.querySelector('.vfx-desc').textContent
+  });
+});
+
 document.querySelectorAll('.sel-tile').forEach(t => {
   const v = t.querySelector('video');
   const durEl = t.querySelector('.sel-dur');
