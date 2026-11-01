@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xmas Lab</title>
+<meta name="description" content="ブラウザだけで描く、クリスマスの試作集。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&family=Shippori+Mincho:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #070a14; --fg: #e8eefc; --dim: rgba(232,238,252,.55); --line: rgba(232,238,252,.12); --card: rgba(255,255,255,.03); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--fg); font-family: 'Outfit', sans-serif; min-height: 100vh; }
+  #snow { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 72px 16px 96px; }
+  header { margin-bottom: 56px; }
+  h1 { font-weight: 200; font-size: clamp(30px, 6vw, 56px); letter-spacing: .3em; }
+  header p { margin-top: 14px; color: var(--dim); font-size: 14px; letter-spacing: .08em; line-height: 1.9; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  a.card { display: block; text-decoration: none; color: inherit; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--card);
+           transition: transform .4s cubic-bezier(.2,.8,.2,1), border-color .4s; }
+  a.card:hover { transform: translateY(-4px); border-color: rgba(232,238,252,.3); }
+  .thumb { aspect-ratio: 16 / 10; position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .thumb iframe { position: absolute; top: 0; left: 0; width: 250%; height: 250%; transform: scale(.4); transform-origin: 0 0; border: 0; pointer-events: none; }
+  .thumb .ph { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; letter-spacing: .2em; color: var(--dim); }
+  .body { padding: 18px 20px 22px; }
+  .no { font-size: 11px; letter-spacing: .2em; color: var(--dim); }
+  .body h2 { margin-top: 6px; font-weight: 300; font-size: 20px; letter-spacing: .14em; }
+  .body p { margin-top: 10px; font-size: 13px; line-height: 1.8; color: var(--dim); }
+  .tags { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .tags span { font-size: 11px; letter-spacing: .06em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); }
+  footer { margin-top: 64px; font-size: 12px; color: var(--dim); letter-spacing: .1em; }
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<main>
+  <header>
+    <h1>XMAS LAB</h1>
+    <p>ブラウザだけで描く、クリスマスの試作集。<br>どれも画像素材なしで、コードだけで動いています。</p>
+  </header>
+  <div class="grid" id="grid"></div>
+  <footer>nexoria lab · 2026</footer>
+</main>
+<script>
+const WORKS = [
+  { path: 'wire-town/', title: 'WIRE TOWN', text: '線だけで描かれた雪の街。家をクリックすると窓に灯りがともり、全部ともるとソリが夜空を横切る。', tags: ['three.js', 'ワイヤーフレーム', '触ると反応'] },
+  { path: 'window-street/', title: 'WINDOW STREET', text: '手描きの線で引かれていく通り。灯りのついた窓をクリックすると、中の小さな物語が覗ける。', tags: ['SVG', 'rough.js', '眺めて覗く'] },
+  { path: 'particle-town/', title: 'PARTICLE TOWN', text: '6万粒の光でできた街。なぞると散って、また戻る。街・ツリー・結晶・メッセージへ姿を変える。', tags: ['three.js', 'パーティクル', 'GLSL'] },
+  { path: 'sky-town/', title: 'SKY TOWN', text: '操れるのは空だけ。夕暮れから夜へ、雪、風、オーロラ。暗くなるほど窓に灯りが増える。', tags: ['シェーダー', '天気と時間'] },
+  { path: 'snowflake/', title: 'SNOWFLAKE MAKER', text: '線を1本描くと6方向に写って結晶になる。できた結晶は空へ飛んでいき、降り続ける。', tags: ['Canvas', '描く', '保存できる'] },
+  { path: 'chime-tree/', title: 'CHIME TREE', text: 'オーナメントを撫でると揺れて鳴る楽器のツリー。弾いた順が光の線で残り、あとで再生できる。', tags: ['Web Audio', '音', '振り子'] },
+  { path: 'frost-window/', title: 'FROST WINDOW', text: '曇った窓ガラスを指でなぞると、外の夜の通りがのぞく。しずくが垂れ、しばらくするとまた曇る。', tags: ['シェーダー', 'なぞる', 'にじむ光'] },
+  { path: 'fireplace/', title: 'FIREPLACE', text: 'ずっと眺めていられる暖炉。手をかざすと炎が強まり、薪をくべると火の粉が上がる。パチパチ音つき。', tags: ['Canvas', '音', 'ドラッグ'] },
+  { path: 'snowman/', title: 'SNOWMAN', text: '雪玉を転がすと大きくなる。3つ積んで、目・にんじん・枝の腕・マフラー・帽子をつける。', tags: ['three.js', 'つくる', '3D'] },
+  { path: 'string-lights/', title: 'STRING LIGHTS', text: 'ドラッグした線がそのまま電飾になって、重さで垂れる。つまむと揺れ、光り方と色を切り替えられる。', tags: ['Canvas', 'ロープの物理', '描く'] },
+  { path: 'snow-globe/', title: 'SNOW GLOBE', text: 'つかんで振ると、ガラスの中で雪とラメが舞い上がり、ゆっくり積もる。オルゴールつき。', tags: ['three.js', '振る', '音'] },
+  { path: 'knit-sweater/', title: 'KNIT SWEATER', text: '一目ずつ塗って、クリスマスセーターを編む。「おまかせ」で下の段から模様が編み上がる。', tags: ['Canvas', 'ドット絵', '保存できる'] },
+  { path: 'advent-doors/', title: 'ADVENT DOORS', text: '24枚の扉をあけると、奥で小さな冬の場面が動いている。あけた扉は次に来ても覚えている。', tags: ['CSS 3D', 'Canvas', '毎日あける'] },
+];
+const grid = document.getElementById('grid');
+// サムネイルは本物のページを縮小表示。画面外に出たら外して重さを抑える
+const io = new IntersectionObserver(es => es.forEach(e => {
+  const t = e.target, f = t.querySelector('iframe');
+  if (e.isIntersecting && !f) {
+    const n = document.createElement('iframe'); n.src = t.dataset.src; n.tabIndex = -1; n.setAttribute('aria-hidden', 'true');
+    t.appendChild(n);
+  } else if (!e.isIntersecting && f) f.remove();
+}), { rootMargin: '80px' });
+WORKS.forEach((w, i) => {
+  const a = document.createElement('a'); a.className = 'card'; a.href = w.path;
+  a.innerHTML = `<div class="thumb" data-src="${w.path}"><div class="ph">LOADING</div></div>
+    <div class="body"><div class="no">${String(i + 1).padStart(2, '0')}</div><h2>${w.title}</h2><p>${w.text}</p>
+    <div class="tags">${w.tags.map(t => `<span>${t}</span>`).join('')}</div></div>`;
+  grid.appendChild(a);
+  io.observe(a.querySelector('.thumb'));
+});
+
+// 背景の雪
+const cv = document.getElementById('snow'), cx = cv.getContext('2d');
+let flakes = [];
+function resize() { const d = Math.min(devicePixelRatio, 2); cv.width = innerWidth * d; cv.height = innerHeight * d; cx.setTransform(d, 0, 0, d, 0, 0);
+  flakes = Array.from({ length: Math.round(innerWidth * innerHeight / 9000) }, () => ({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: Math.random() * 1.6 + 0.4, v: Math.random() * 18 + 8, p: Math.random() * 10 })); }
+let last = performance.now();
+(function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  cx.clearRect(0, 0, innerWidth, innerHeight); cx.fillStyle = 'rgba(232,238,252,.5)';
+  for (const f of flakes) { f.y += f.v * dt; if (f.y > innerHeight) { f.y = -4; f.x = Math.random() * innerWidth; } cx.beginPath(); cx.arc(f.x + Math.sin(now / 1500 + f.p) * 8, f.y, f.r, 0, Math.PI * 2); cx.fill(); }
+  requestAnimationFrame(loop);
+})(last);
+addEventListener('resize', resize); resize();
+</script>
+</body>
+</html>

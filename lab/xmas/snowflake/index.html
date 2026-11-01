@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Maker</title>
+<meta name="description" content="線を1本描くと、6方向に写って雪の結晶になる。できた結晶は空に降っていく。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #060a18; color: #dceaff; font-family: 'Outfit', sans-serif; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #draw { cursor: crosshair; }
+  .head { position: fixed; top: 24px; left: 24px; pointer-events: none; }
+  .head h1 { font-weight: 200; font-size: clamp(22px, 4vw, 32px); letter-spacing: .3em; }
+  .head p { margin-top: 8px; font-size: 13px; font-weight: 300; opacity: .55; letter-spacing: .06em; }
+  .back { position: fixed; top: 24px; right: 24px; color: #dceaff; opacity: .55; text-decoration: none; font-size: 13px; letter-spacing: .1em; }
+  .bar { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 4px; padding: 6px; flex-wrap: wrap; justify-content: center;
+         border-radius: 999px; background: rgba(20,30,60,.55); border: 1px solid rgba(220,234,255,.14); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); max-width: calc(100vw - 32px); }
+  .bar button { font: inherit; font-size: 13px; letter-spacing: .06em; color: #dceaff; background: none; border: 1px solid transparent; padding: 8px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .bar button:hover { border-color: rgba(220,234,255,.25); }
+  .bar button.primary { background: rgba(160,200,255,.18); }
+  .count { position: fixed; right: 24px; bottom: 26px; font-size: 12px; opacity: .45; letter-spacing: .1em; }
+  @media (max-width: 640px) { .count { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<canvas id="draw"></canvas>
+<div class="head">
+  <h1>SNOWFLAKE MAKER</h1>
+  <p>円の中に線を描くと、6方向に写って結晶になる</p>
+</div>
+<a class="back" href="../">← index</a>
+<div class="bar">
+  <button id="undo">↶ ひとつ戻す</button>
+  <button id="clear">まっさらに</button>
+  <button id="auto">✳︎ おまかせ</button>
+  <button id="save">画像で保存</button>
+  <button id="send" class="primary">空に降らせる ❄︎</button>
+</div>
+<div class="count" id="count"></div>
+
+<script>
+const sky = document.getElementById('sky'), draw = document.getElementById('draw');
+const sx = sky.getContext('2d'), dx = draw.getContext('2d');
+let W, H, DPR, CX, CY, RAD;
+let strokes = [], current = null, flakes = [], sending = null;
+const STORE = 'xmas-snowflakes-v1';
+
+function resize() {
+  DPR = Math.min(devicePixelRatio, 2); W = innerWidth; H = innerHeight;
+  for (const c of [sky, draw]) { c.width = W * DPR; c.height = H * DPR; c.getContext('2d').setTransform(DPR, 0, 0, DPR, 0, 0); }
+  CX = W / 2; CY = H * (W < 640 ? 0.42 : 0.47); RAD = Math.min(W * (W < 640 ? 0.42 : 0.34), H * 0.32);
+}
+
+// ---------- 結晶を描く ----------
+// strokes: 正規化座標（中心0, 半径1）の点列。6回転 × 鏡映 = 12本に写す
+function paintFlake(ctx, list, r, opts = {}) {
+  const { glow = 12, width = 2.2, color = '#e6f1ff', glowColor = 'rgba(140,190,255,.9)' } = opts;
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.shadowColor = glowColor; ctx.shadowBlur = glow;
+  for (let k = 0; k < 6; k++) for (const m of [1, -1]) {
+    ctx.save(); ctx.rotate(k * Math.PI / 3); ctx.scale(1, m);
+    for (const s of list) {
+      if (s.length < 2) { if (s.length === 1) { ctx.beginPath(); ctx.arc(s[0][0] * r, s[0][1] * r, width, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); } continue; }
+      ctx.beginPath(); ctx.moveTo(s[0][0] * r, s[0][1] * r);
+      for (let i = 1; i < s.length; i++) ctx.lineTo(s[i][0] * r, s[i][1] * r);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function sprite(list, size) {
+  const c = document.createElement('canvas'), pad = 16; c.width = c.height = (size + pad) * 2;
+  const g = c.getContext('2d'); g.translate(size + pad, size + pad);
+  paintFlake(g, list, size, { width: Math.max(1.2, size / 60), glow: Math.max(4, size / 10) });
+  return c;
+}
+
+// ---------- 入力 ----------
+const toLocal = e => {
+  let x = (e.clientX - CX) / RAD, y = (e.clientY - CY) / RAD;
+  const d = Math.hypot(x, y); if (d > 1) { x /= d; y /= d; }
+  return [x, y];
+};
+draw.addEventListener('pointerdown', e => {
+  if (sending) return;
+  if (Math.hypot(e.clientX - CX, e.clientY - CY) > RAD * 1.15) return;
+  draw.setPointerCapture(e.pointerId);
+  current = [toLocal(e)]; strokes.push(current);
+});
+draw.addEventListener('pointermove', e => {
+  if (!current) return;
+  const p = toLocal(e), q = current[current.length - 1];
+  if (Math.hypot(p[0] - q[0], p[1] - q[1]) > 0.006) current.push(p);
+});
+draw.addEventListener('pointerup', () => { if (current) chime(500 + Math.random() * 700); current = null; });
+
+document.getElementById('undo').onclick = () => { strokes.pop(); };
+document.getElementById('clear').onclick = () => { strokes = []; };
+document.getElementById('auto').onclick = () => { strokes = randomFlake(); chime(880); };
+document.getElementById('save').onclick = () => {
+  if (!strokes.length) return;
+  const c = document.createElement('canvas'), s = 1024; c.width = c.height = s;
+  const g = c.getContext('2d'); g.fillStyle = '#060a18'; g.fillRect(0, 0, s, s); g.translate(s / 2, s / 2);
+  paintFlake(g, strokes, s * 0.44, { width: 5, glow: 24 });
+  const a = document.createElement('a'); a.download = 'snowflake.png'; a.href = c.toDataURL('image/png'); a.click();
+};
+document.getElementById('send').onclick = () => {
+  if (!strokes.length || sending) return;
+  sending = { list: strokes.map(s => s.map(p => [...p])), t: 0, target: newFlakeState(strokes) };
+  strokes = [];
+  [0, 4, 7, 11].forEach((n, i) => chime(523.25 * Math.pow(2, n / 12) * 2, i * 0.12));
+};
+
+// ---------- おまかせ生成 ----------
+function randomFlake() {
+  // 主軸を真上に向け、片側だけ描けば鏡映と回転で全体が埋まる
+  const r = Math.random, rot = ([x, y]) => [y, -x];
+  const list = [[rot([0, 0]), rot([0.92 + r() * 0.06, 0])]];
+  const n = 2 + Math.floor(r() * 4);
+  for (let i = 0; i < n; i++) {
+    const at = 0.2 + (i + r() * 0.6) / n * 0.7, len = (0.12 + r() * 0.28) * (1 - at * 0.6), ang = Math.PI / 3 * (0.7 + r() * 0.5);
+    const p0 = [at, 0], p1 = [at + Math.cos(ang) * len, Math.sin(ang) * len];
+    list.push([rot(p0), rot(p1)]);
+    if (r() < 0.5) { const q0 = [p0[0] + (p1[0] - p0[0]) * 0.55, p0[1] + (p1[1] - p0[1]) * 0.55]; list.push([rot(q0), rot([q0[0] + len * 0.25, q0[1] + len * 0.05])]); }
+  }
+  if (r() < 0.6) { const hr = 0.12 + r() * 0.2; list.push([rot([hr, 0]), rot([hr * 0.75, hr * 0.433])]); }
+  if (r() < 0.5) { const t = 0.55 + r() * 0.3; list.push([rot([t, 0.06]), rot([t + 0.08, 0]), rot([t, -0.06])]); }
+  if (r() < 0.4) list.push([rot([1, 0])]);
+  return list;
+}
+
+// ---------- 空 ----------
+function newFlakeState(list) {
+  const size = 22 + Math.random() * 38;
+  return { list, size, img: sprite(list, size), x: Math.random() * W, y: -size * 2 - Math.random() * H * 0.2, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, vy: 14 + Math.random() * 18, ph: Math.random() * 10 };
+}
+function load() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORE) || '[]');
+    flakes = data.map(list => { const f = newFlakeState(list); f.y = Math.random() * H; return f; });
+  } catch { flakes = []; }
+  if (!flakes.length) for (let i = 0; i < 6; i++) { const f = newFlakeState(randomFlake()); f.y = Math.random() * H; f.demo = true; flakes.push(f); }
+}
+function persist() {
+  try { localStorage.setItem(STORE, JSON.stringify(flakes.filter(f => !f.demo).slice(-60).map(f => f.list.map(s => s.map(p => [+p[0].toFixed(3), +p[1].toFixed(3)]))))); } catch {}
+}
+const dust = Array.from({ length: 160 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.4 + 0.3, v: Math.random() * 0.5 + 0.2 }));
+
+// ---------- 音 ----------
+let actx;
+function chime(freq, when = 0) {
+  try {
+    actx ??= new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime + when, o = actx.createOscillator(), o2 = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = freq; o2.type = 'sine'; o2.frequency.value = freq * 3.01;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.05, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+    const g2 = actx.createGain(); g2.gain.value = 0.25;
+    o.connect(g); o2.connect(g2).connect(g); g.connect(actx.destination);
+    o.start(t); o2.start(t); o.stop(t + 2); o2.stop(t + 2);
+  } catch {}
+}
+
+// ---------- ループ ----------
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; const t = now / 1000;
+  // 空
+  sx.clearRect(0, 0, W, H);
+  const grd = sx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, '#060a18'); grd.addColorStop(1, '#101a36');
+  sx.fillStyle = grd; sx.fillRect(0, 0, W, H);
+  sx.fillStyle = 'rgba(220,234,255,.5)';
+  for (const d of dust) { d.y += d.v * dt * 0.03; if (d.y > 1) d.y = 0; sx.beginPath(); sx.arc(d.x * W + Math.sin(t * 0.5 + d.y * 20) * 6, d.y * H, d.r, 0, Math.PI * 2); sx.fill(); }
+  for (const f of flakes) {
+    f.y += f.vy * dt; f.rot += f.vr * dt;
+    const x = f.x + Math.sin(t * 0.4 + f.ph) * 30;
+    if (f.y > H + f.size * 2) { f.y = -f.size * 2; f.x = Math.random() * W; }
+    sx.save(); sx.globalAlpha = 0.75; sx.translate(x, f.y); sx.rotate(f.rot); sx.drawImage(f.img, -f.img.width / 2, -f.img.height / 2); sx.restore();
+  }
+
+  // 描画面
+  dx.clearRect(0, 0, W, H);
+  dx.save(); dx.translate(CX, CY);
+  const guideA = sending ? Math.max(0, 1 - sending.t * 3) : 1;
+  dx.globalAlpha = guideA;
+  dx.fillStyle = 'rgba(6,10,24,.55)'; dx.beginPath(); dx.arc(0, 0, RAD * 1.06, 0, Math.PI * 2); dx.fill();
+  dx.strokeStyle = 'rgba(160,200,255,.18)'; dx.lineWidth = 1;
+  dx.beginPath(); dx.arc(0, 0, RAD, 0, Math.PI * 2); dx.stroke();
+  dx.setLineDash([3, 6]);
+  for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + k * Math.PI / 3; dx.beginPath(); dx.moveTo(0, 0); dx.lineTo(Math.cos(a) * RAD, Math.sin(a) * RAD); dx.stroke(); }
+  dx.setLineDash([]);
+  // 描くための扇形（ここに描くと分かりやすい）
+  dx.fillStyle = 'rgba(160,200,255,.05)'; dx.beginPath(); dx.moveTo(0, 0); dx.arc(0, 0, RAD, -Math.PI / 2 - Math.PI / 6, -Math.PI / 2 + Math.PI / 6); dx.closePath(); dx.fill();
+  if (!strokes.length && !sending) {
+    dx.fillStyle = 'rgba(220,234,255,.35)'; dx.font = '300 14px Outfit, sans-serif'; dx.textAlign = 'center';
+    dx.fillText('ここに線を描いてみて', 0, -RAD * 0.55);
+  }
+  dx.globalAlpha = 1;
+  paintFlake(dx, strokes, RAD, { width: W < 640 ? 2 : 2.6, glow: 14 });
+  dx.restore();
+
+  // 空へ送る演出（小さくなりながら回って飛んでいく）
+  if (sending) {
+    sending.t += dt / 1.8;
+    const e = 1 - Math.pow(1 - Math.min(1, sending.t), 3), tg = sending.target;
+    const tx = W * 0.5 + (tg.x - W * 0.5) * e, ty = CY + (H * 0.12 - CY) * e;
+    const r = RAD + (tg.size - RAD) * e;
+    dx.save(); dx.translate(tx, ty); dx.rotate(e * Math.PI * 1.5);
+    paintFlake(dx, sending.list, r, { width: 2.6 - e * 1.2, glow: 14 });
+    dx.restore();
+    if (sending.t >= 1) {
+      tg.y = ty; tg.rot = Math.PI * 1.5; flakes.push(tg); sending = null; persist(); updateCount();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+function updateCount() { const n = flakes.filter(f => !f.demo).length; document.getElementById('count').textContent = n ? `空にある結晶 ${n}` : ''; }
+
+addEventListener('resize', () => { resize(); });
+resize(); load(); updateCount();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

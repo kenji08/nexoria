@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sky Town</title>
+<meta name="description" content="空だけを操れる街。夕暮れから夜へ、雪の強さ、風、オーロラ。暗くなると窓に灯りがともる。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #020414; color: #eef2ff; font-family: 'Outfit', sans-serif; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: ns-resize; }
+  .head { position: fixed; top: 24px; left: 24px; pointer-events: none; text-shadow: 0 1px 12px rgba(0,0,0,.35); }
+  .head h1 { font-weight: 200; font-size: clamp(22px, 4vw, 32px); letter-spacing: .32em; }
+  .head p { margin-top: 8px; font-size: 13px; font-weight: 300; opacity: .7; letter-spacing: .06em; }
+  .back { position: fixed; top: 24px; right: 24px; color: #eef2ff; opacity: .65; text-decoration: none; font-size: 13px; letter-spacing: .1em; }
+  .bar { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); display: grid; grid-template-columns: repeat(4, auto); gap: 4px 18px; padding: 12px 20px;
+         border-radius: 20px; background: rgba(10,14,40,.45); border: 1px solid rgba(238,242,255,.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .bar label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; letter-spacing: .12em; opacity: .85; }
+  .bar input { width: 110px; accent-color: #b9c8ff; }
+  @media (max-width: 640px) { .bar { grid-template-columns: repeat(2, auto); } .bar input { width: 120px; } }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<div class="head">
+  <h1>SKY TOWN</h1>
+  <p>空を上下にドラッグすると時間が流れる ・ 長押しでオーロラ</p>
+</div>
+<a class="back" href="../">← index</a>
+<div class="bar">
+  <label>時間 <input id="time" type="range" min="0" max="1" step="0.001" value="0.82"></label>
+  <label>雪 <input id="snow" type="range" min="0" max="1" step="0.01" value="0.45"></label>
+  <label>風 <input id="wind" type="range" min="-1" max="1" step="0.01" value="0.15"></label>
+  <label>オーロラ <input id="aurora" type="range" min="0" max="1" step="0.01" value="0.25"></label>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene(), camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+const U = {
+  uRes: { value: new THREE.Vector2() }, uTime: { value: 0 },
+  uNight: { value: 0.82 }, uSnow: { value: 0.45 }, uWind: { value: 0.15 }, uAurora: { value: 0.25 }, uWindOff: { value: 0 },
+};
+const mat = new THREE.ShaderMaterial({
+  uniforms: U,
+  vertexShader: `void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+  fragmentShader: `
+    precision highp float;
+    uniform vec2 uRes; uniform float uTime, uNight, uSnow, uWind, uAurora, uWindOff;
+
+    float h11(float p){ p = fract(p * 0.1031); p *= p + 33.33; p *= p + p; return fract(p); }
+    float h21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+    vec2 h22(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
+    float noise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+      return mix(mix(h21(i), h21(i + vec2(1, 0)), u.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), u.x), u.y); }
+    float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + 17.1; a *= 0.5; } return v; }
+
+    // 街のシルエット：x（画面幅基準）から建物の高さを返す
+    float skyline(float x, out float cell, out float roof){
+      float w = 0.055;
+      cell = floor(x / w);
+      float r = h11(cell * 1.7 + 3.0);
+      float hgt = 0.07 + r * 0.11 + step(0.85, h11(cell * 5.3)) * 0.05;
+      float fx = fract(x / w);
+      roof = 0.0;
+      if (r > 0.55) { float peak = (r - 0.55) * 0.18; hgt += peak * (1.0 - abs(fx - 0.5) * 2.0); roof = 1.0; }
+      if (abs(cell - 9.0) < 0.5) { hgt = 0.27 + 0.16 * max(0.0, 1.0 - abs(fx - 0.5) * 6.0); roof = 2.0; } // 教会の塔
+      float gap = step(0.04, fx) * step(fx, 0.96);
+      return hgt * gap;
+    }
+
+    void main(){
+      vec2 uv = gl_FragCoord.xy / uRes;
+      float asp = uRes.x / uRes.y;
+      vec2 p = vec2(uv.x * asp, uv.y);
+      float n = uNight;                  // 0 = 夕方, 1 = 真夜中
+      float horizon = 0.16;
+
+      // 空のグラデーション
+      vec3 duskTop = vec3(0.16, 0.22, 0.48), duskMid = vec3(0.62, 0.46, 0.62), duskLow = vec3(1.0, 0.62, 0.42);
+      vec3 nightTop = vec3(0.004, 0.008, 0.04), nightMid = vec3(0.02, 0.04, 0.11), nightLow = vec3(0.07, 0.1, 0.2);
+      float y = clamp((uv.y - horizon) / (1.0 - horizon), 0.0, 1.0);
+      vec3 dusk = mix(duskLow, mix(duskMid, duskTop, smoothstep(0.25, 1.0, y)), smoothstep(0.0, 0.3, y));
+      vec3 night = mix(nightLow, mix(nightMid, nightTop, smoothstep(0.2, 1.0, y)), smoothstep(0.0, 0.35, y));
+      vec3 col = mix(dusk, night, smoothstep(0.0, 1.0, n));
+
+      // 星
+      vec2 sg = p * 90.0; vec2 sc = floor(sg); vec2 sr = h22(sc);
+      float sd = length(fract(sg) - sr);
+      float tw = 0.6 + 0.4 * sin(uTime * (1.0 + sr.x * 3.0) + sr.y * 40.0);
+      float star = (1.0 - smoothstep(0.0, 0.06 + sr.x * 0.05, sd)) * step(0.82, h21(sc + 7.0)) * tw;
+      col += vec3(0.9, 0.95, 1.0) * star * smoothstep(0.45, 1.0, n) * smoothstep(0.2, 0.5, uv.y);
+
+      // 月
+      vec2 mp = vec2(asp * 0.78, mix(0.42, 0.8, n));
+      float md = length(p - mp);
+      float moon = 1.0 - smoothstep(0.05, 0.053, md);
+      float crater = fbm((p - mp) * 30.0) * 0.18;
+      col = mix(col, vec3(1.0, 0.97, 0.88) - crater, moon * smoothstep(0.2, 0.8, n));
+      col += vec3(0.6, 0.65, 0.8) * exp(-md * 9.0) * 0.25 * smoothstep(0.2, 0.9, n);
+
+      // オーロラ
+      float aur = uAurora * smoothstep(0.35, 0.95, n);
+      if (aur > 0.001) {
+        vec3 acc = vec3(0.0);
+        for (int i = 0; i < 3; i++) {
+          float fi = float(i);
+          float base = 0.6 + fi * 0.08 + (fbm(vec2(p.x * 0.7 + fi * 3.0 + uTime * 0.03, uTime * 0.05)) - 0.5) * 0.35;
+          float d = uv.y - base;
+          float curtain = exp(-max(d, 0.0) * 9.0) * smoothstep(-0.03, 0.0, d);
+          float rays = 0.55 + 0.45 * noise(vec2(p.x * 28.0 + fi * 11.0 + uTime * 0.4, uTime * 0.2));
+          vec3 c = mix(vec3(0.1, 1.0, 0.55), vec3(0.45, 0.35, 1.0), smoothstep(0.0, 0.18, max(d, 0.0)) + fi * 0.25);
+          acc += c * curtain * rays * (0.55 - fi * 0.12);
+        }
+        col += acc * aur * 1.3 * smoothstep(horizon, horizon + 0.25, uv.y);
+      }
+
+      // 遠景の丘
+      float hill = horizon + 0.06 + (fbm(vec2(p.x * 1.6, 1.0)) - 0.5) * 0.12;
+      vec3 hillCol = mix(vec3(0.33, 0.3, 0.45), vec3(0.03, 0.05, 0.1), n);
+      col = mix(col, hillCol, smoothstep(hill + 0.002, hill - 0.002, uv.y));
+
+      // 街
+      float cell, roof;
+      float bh = skyline(p.x, cell, roof);
+      float top = horizon + bh;
+      if (uv.y < top && bh > 0.0) {
+        vec3 wall = mix(vec3(0.12, 0.1, 0.18), vec3(0.015, 0.02, 0.045), n);
+        col = wall;
+        // 窓
+        float w = 0.055;
+        vec2 wp = vec2(fract(p.x / w), (uv.y - horizon) / 0.03);
+        vec2 wc = vec2(cell, floor(wp.y));
+        vec2 wf = vec2(fract(wp.x * 3.0), fract(wp.y));
+        float inWin = step(0.3, wf.x) * step(wf.x, 0.7) * step(0.3, wf.y) * step(wf.y, 0.75) * step(0.15, wp.x) * step(wp.x, 0.85);
+        inWin *= step(uv.y, top - (roof > 0.5 ? 0.035 : 0.012)) * step(horizon + 0.012, uv.y);
+        float id = h21(wc * vec2(1.0, 3.1) + floor(wp.x * 3.0) * 7.7);
+        float lit = step(id, smoothstep(0.15, 0.85, n) * 0.62);
+        float flick = 0.85 + 0.15 * sin(uTime * (2.0 + id * 5.0) + id * 50.0);
+        vec3 warm = mix(vec3(1.0, 0.72, 0.38), vec3(1.0, 0.85, 0.6), id);
+        col = mix(col, warm * flick * 1.2, inWin * lit);
+        col = mix(col, vec3(0.06, 0.07, 0.12), inWin * (1.0 - lit) * 0.6);
+        // 屋根の雪
+        float snowCap = smoothstep(top - 0.008, top - 0.004, uv.y) * smoothstep(0.0, 0.3, uSnow + 0.3);
+        col = mix(col, mix(vec3(0.9, 0.85, 0.9), vec3(0.6, 0.66, 0.8), n), snowCap);
+      }
+      // 窓あかりのにじみ
+      col += vec3(1.0, 0.6, 0.3) * 0.06 * smoothstep(0.2, 1.0, n) * exp(-max(uv.y - horizon, 0.0) * 12.0) * step(horizon, uv.y);
+
+      // 地面（雪原）
+      float ground = horizon + (noise(vec2(p.x * 4.0, 2.0)) - 0.5) * 0.012;
+      if (uv.y < ground) {
+        vec3 g = mix(vec3(0.85, 0.78, 0.82), vec3(0.18, 0.22, 0.34), n);
+        g += vec3(1.0, 0.7, 0.4) * 0.12 * smoothstep(0.3, 1.0, n) * (1.0 - uv.y / ground);
+        g *= 0.85 + 0.15 * noise(p * vec2(40.0, 120.0));
+        col = g;
+      }
+
+      // 降る雪（3層）
+      for (int i = 0; i < 3; i++) {
+        float fi = float(i);
+        float scale = 14.0 - fi * 4.0;
+        float speed = 0.06 + fi * 0.05;
+        vec2 q = p * scale;
+        q.y += uTime * speed * scale;
+        q.x += uWindOff * scale * (0.6 + fi * 0.4) + sin(q.y * 0.35 + fi) * 0.5;
+        vec2 c = floor(q), f = fract(q);
+        vec2 r = h22(c + fi * 13.0);
+        float exist = step(1.0 - uSnow * (0.9 - fi * 0.15), h21(c + 3.3 + fi));
+        float d = length(f - r);
+        float size = 0.05 + fi * 0.035;
+        float flake = (1.0 - smoothstep(size * 0.4, size, d)) * exist;
+        col = mix(col, vec3(1.0), flake * (0.5 + fi * 0.2));
+      }
+
+      // ビネット
+      col *= 0.82 + 0.18 * smoothstep(1.2, 0.3, length(uv - 0.5));
+      gl_FragColor = vec4(pow(col, vec3(0.95)), 1.0);
+    }`,
+});
+scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
+
+// ---------- 入力 ----------
+const $ = id => document.getElementById(id);
+const target = { night: 0.82, snow: 0.45, wind: 0.15, aurora: 0.25 };
+for (const k of ['snow', 'wind', 'aurora']) $(k).addEventListener('input', e => target[k] = +e.target.value);
+$('time').addEventListener('input', e => target.night = +e.target.value);
+
+let drag = null, hold = null;
+renderer.domElement.addEventListener('pointerdown', e => {
+  drag = { y: e.clientY, x: e.clientX, n: target.night, w: target.wind };
+  renderer.domElement.setPointerCapture(e.pointerId);
+  hold = setTimeout(() => { hold = 'on'; }, 450);
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dy = (e.clientY - drag.y) / innerHeight, dx = (e.clientX - drag.x) / innerWidth;
+  if (Math.abs(dy) > 0.01 || Math.abs(dx) > 0.01) { if (hold !== 'on') { clearTimeout(hold); hold = null; } }
+  target.night = Math.min(1, Math.max(0, drag.n + dy * 1.4));
+  target.wind = Math.min(1, Math.max(-1, drag.w + dx * 1.5));
+  $('time').value = target.night; $('wind').value = target.wind;
+});
+const release = () => { drag = null; clearTimeout(hold); hold = null; };
+renderer.domElement.addEventListener('pointerup', release);
+renderer.domElement.addEventListener('pointercancel', release);
+renderer.domElement.addEventListener('wheel', e => { e.preventDefault(); target.snow = Math.min(1, Math.max(0, target.snow - e.deltaY * 0.001)); $('snow').value = target.snow; }, { passive: false });
+
+// ---------- ループ ----------
+const clock = new THREE.Clock();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  U.uTime.value += dt;
+  if (hold === 'on') { target.aurora = Math.min(1, target.aurora + dt * 0.5); $('aurora').value = target.aurora; }
+  const k = Math.min(1, dt * 2.5);
+  U.uNight.value += (target.night - U.uNight.value) * k;
+  U.uSnow.value += (target.snow - U.uSnow.value) * k;
+  U.uWind.value += (target.wind - U.uWind.value) * k;
+  U.uAurora.value += (target.aurora - U.uAurora.value) * k;
+  U.uWindOff.value -= U.uWind.value * dt * 0.08;
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  U.uRes.value.set(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio());
+}
+addEventListener('resize', resize);
+resize();
+frame();
+</script>
+</body>
+</html>

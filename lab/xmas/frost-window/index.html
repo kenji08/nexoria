@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frost Window</title>
+<meta name="description" content="曇った窓ガラスを指でなぞると、外の夜の通りが見える。しばらくすると、また曇ってくる。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #0b0e16; color: #f3efe8; font-family: 'Outfit', sans-serif; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='10' fill='none' stroke='white' stroke-opacity='.6'/%3E%3C/svg%3E") 14 14, crosshair; }
+  .frame { position: fixed; inset: 0; pointer-events: none; border: clamp(14px, 3vw, 34px) solid #2a1d16;
+           box-shadow: inset 0 0 0 2px #3d2a1f, inset 0 0 40px rgba(0,0,0,.6); }
+  .frame::before, .frame::after { content: ''; position: absolute; background: #2a1d16; box-shadow: 0 0 0 2px #3d2a1f, 0 0 24px rgba(0,0,0,.5); }
+  .frame::before { left: 50%; top: 0; bottom: 0; width: clamp(8px, 1.4vw, 16px); transform: translateX(-50%); }
+  .frame::after { top: 46%; left: 0; right: 0; height: clamp(8px, 1.4vw, 16px); }
+  .hint { position: fixed; left: 50%; bottom: clamp(30px, 6vh, 60px); transform: translateX(-50%); pointer-events: none; text-align: center;
+          font-size: 13px; letter-spacing: .14em; color: rgba(255,255,255,.6); transition: opacity 1.5s; white-space: nowrap; }
+  .hint.hide { opacity: 0; }
+  .back { position: fixed; top: clamp(24px, 4vw, 46px); right: clamp(26px, 4.5vw, 52px); color: rgba(255,255,255,.55); text-decoration: none; font-size: 13px; letter-spacing: .1em; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<div class="frame"></div>
+<div class="hint" id="hint">指でガラスをなぞってみて</div>
+<a class="back" href="../">← index</a>
+
+<script type="module">
+import * as THREE from 'three';
+
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+const PR = Math.min(devicePixelRatio, 1.5);
+renderer.setPixelRatio(PR);
+renderer.setSize(innerWidth, innerHeight);
+document.body.prepend(renderer.domElement);
+
+const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const quad = mat => { const s = new THREE.Scene(); s.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat)); return s; };
+const VS = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
+const COMMON = `
+  float h21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+  vec2 h22(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
+  float noise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(h21(i), h21(i + vec2(1, 0)), u.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), u.x), u.y); }
+`;
+
+// ---------- 1. 窓の外（夜の通り） ----------
+const bgU = { uRes: { value: new THREE.Vector2() }, uTime: { value: 0 } };
+const bgMat = new THREE.ShaderMaterial({
+  uniforms: bgU, vertexShader: VS,
+  fragmentShader: `
+    precision highp float; varying vec2 vUv; uniform vec2 uRes; uniform float uTime;
+    ${COMMON}
+    vec3 bulb(vec2 p, vec2 c, vec3 col, float r){ float d = length(p - c); return col * (exp(-d * d / (r * r)) * 1.2 + exp(-d / (r * 5.0)) * 0.15); }
+    void main(){
+      float asp = uRes.x / uRes.y;
+      vec2 p = vec2(vUv.x * asp, vUv.y);
+      vec3 col = mix(vec3(0.03, 0.045, 0.1), vec3(0.09, 0.11, 0.22), smoothstep(0.9, 0.2, vUv.y));
+      // 向かいの家並み
+      float cw = 0.16;
+      float cell = floor(p.x / cw), fx = fract(p.x / cw);
+      float hgt = 0.55 + h21(vec2(cell, 1.0)) * 0.25;
+      if (vUv.y < hgt) {
+        col = vec3(0.06, 0.055, 0.09) + vec3(0.05, 0.03, 0.01) * smoothstep(0.5, 0.2, vUv.y);
+        vec2 wg = vec2(fx * 3.0, vUv.y / 0.09);
+        vec2 wi = floor(wg), wf = fract(wg);
+        float win = step(0.25, wf.x) * step(wf.x, 0.75) * step(0.2, wf.y) * step(wf.y, 0.8) * step(0.2, vUv.y) * step(vUv.y, hgt - 0.06);
+        float on = step(0.45, h21(wi + cell * 7.0));
+        col = mix(col, vec3(1.0, 0.68, 0.36) * (0.8 + 0.2 * h21(wi + cell)), win * on);
+      }
+      // 地面と雪
+      if (vUv.y < 0.16) col = mix(vec3(0.2, 0.22, 0.3), vec3(0.45, 0.42, 0.45), smoothstep(0.16, 0.0, vUv.y));
+      // 通りの真ん中の大きなツリー
+      vec2 tp = vec2(asp * 0.62, 0.16);
+      float ty = (vUv.y - tp.y) / 0.62, tx = abs(p.x - tp.x);
+      if (ty > 0.0 && ty < 1.0 && tx < (1.0 - ty) * 0.2) col = vec3(0.02, 0.06, 0.04);
+      vec3 glow = vec3(0.0);
+      for (int i = 0; i < 46; i++) {
+        float fi = float(i);
+        float t = h21(vec2(fi, 3.0)), yy = t * 0.95;
+        float side = (h21(vec2(fi, 9.0)) * 2.0 - 1.0) * (1.0 - yy) * 0.19;
+        vec2 c = tp + vec2(side, yy * 0.62);
+        vec3 bc = mix(vec3(1.0, 0.75, 0.35), mix(vec3(1.0, 0.25, 0.2), vec3(0.3, 0.9, 0.5), step(0.5, h21(vec2(fi, 5.0)))), step(0.6, h21(vec2(fi, 7.0))));
+        glow += bulb(p, c, bc * (0.75 + 0.25 * sin(uTime * 2.0 + fi)), 0.0075);
+      }
+      glow += bulb(p, tp + vec2(0.0, 0.64), vec3(1.0, 0.85, 0.45), 0.014) * 1.5;
+      // 通りに渡したガーランド
+      for (int s = 0; s < 3; s++) {
+        float fs = float(s);
+        float y0 = 0.82 - fs * 0.12, sag = 0.08 + fs * 0.02;
+        for (int i = 0; i < 18; i++) {
+          float u = (float(i) + 0.5) / 18.0;
+          vec2 c = vec2(u * asp, y0 - sag * 4.0 * u * (1.0 - u));
+          float k = h21(vec2(fs, float(i)));
+          vec3 bc = k < 0.33 ? vec3(1.0, 0.55, 0.25) : (k < 0.66 ? vec3(1.0, 0.85, 0.5) : vec3(0.95, 0.3, 0.35));
+          glow += bulb(p, c, bc * (0.7 + 0.3 * sin(uTime * 1.5 + float(i) * 1.7 + fs)), 0.0065);
+        }
+      }
+      col += glow;
+      // 街灯
+      for (int i = 0; i < 3; i++) {
+        vec2 c = vec2((0.12 + float(i) * 0.38) * asp, 0.42);
+        col += bulb(p, c, vec3(1.0, 0.7, 0.4), 0.01) * 1.4;
+        col += vec3(1.0, 0.65, 0.35) * 0.05 * exp(-length((p - c) * vec2(1.5, 0.7)) * 6.0);
+      }
+      // 降る雪
+      for (int i = 0; i < 2; i++) {
+        float sc = 18.0 - float(i) * 7.0;
+        vec2 q = p * sc; q.y += uTime * (0.8 + float(i) * 0.6); q.x += sin(q.y * 0.3 + float(i)) * 0.4;
+        vec2 c = floor(q), f = fract(q); vec2 r = h22(c + float(i) * 10.0);
+        float d = length(f - r);
+        col += vec3(0.8) * (1.0 - smoothstep(0.02, 0.07 + float(i) * 0.04, d)) * step(0.55, h21(c + 1.7));
+      }
+      gl_FragColor = vec4(col, 1.0);
+    }`,
+});
+const bgScene = quad(bgMat);
+
+// ---------- 2. 曇りのマスク（なぞった所が晴れ、ゆっくり戻る） ----------
+const DRIPS = 24;
+const mkU = {
+  uPrev: { value: null }, uRes: { value: new THREE.Vector2() }, uDt: { value: 0.016 },
+  uA: { value: new THREE.Vector2(-999, -999) }, uB: { value: new THREE.Vector2(-999, -999) }, uR: { value: 26 },
+  uDrips: { value: Array.from({ length: DRIPS }, () => new THREE.Vector3(-999, -999, 0)) },
+};
+const maskMat = new THREE.ShaderMaterial({
+  uniforms: mkU, vertexShader: VS,
+  fragmentShader: `
+    precision highp float; varying vec2 vUv;
+    uniform sampler2D uPrev; uniform vec2 uRes; uniform float uDt, uR;
+    uniform vec2 uA, uB; uniform vec3 uDrips[${DRIPS}];
+    float seg(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-4), 0.0, 1.0); return length(pa - ba * h); }
+    void main(){
+      vec2 px = vUv * uRes;
+      float m = texture2D(uPrev, vUv).r;
+      m = max(0.0, m - uDt * 0.045);                       // 曇りが戻る
+      float d = seg(px, uA, uB);
+      m = max(m, 1.0 - smoothstep(uR * 0.55, uR, d));      // 指でぬぐう
+      for (int i = 0; i < ${DRIPS}; i++) {                  // しずくの跡
+        vec3 dr = uDrips[i];
+        float dd = length((px - dr.xy) * vec2(1.0, 0.6));
+        m = max(m, (1.0 - smoothstep(dr.z * 0.5, dr.z, dd)) * 0.92);
+      }
+      gl_FragColor = vec4(m, 0.0, 0.0, 1.0);
+    }`,
+});
+const maskScene = quad(maskMat);
+
+// ---------- 3. 仕上げ（ぼかし＋曇り＋しずく） ----------
+const fU = {
+  uBg: { value: null }, uBgSmall: { value: null }, uMask: { value: null }, uRes: { value: new THREE.Vector2() }, uTime: { value: 0 },
+  uDrips: mkU.uDrips,
+};
+const finalMat = new THREE.ShaderMaterial({
+  uniforms: fU, vertexShader: VS,
+  fragmentShader: `
+    precision highp float; varying vec2 vUv;
+    uniform sampler2D uBg, uBgSmall, uMask; uniform vec2 uRes; uniform float uTime; uniform vec3 uDrips[${DRIPS}];
+    ${COMMON}
+    void main(){
+      vec2 px = 1.0 / uRes;
+      float m = texture2D(uMask, vUv).r;
+      // 小さいテクスチャを数点サンプルしてぼかす
+      vec3 blur = vec3(0.0);
+      for (int i = 0; i < 12; i++) {
+        float a = float(i) / 12.0 * 6.2832; vec2 o = vec2(cos(a), sin(a)) * px * 22.0;
+        blur += texture2D(uBgSmall, vUv + o).rgb;
+      }
+      blur = blur / 12.0 * 0.6 + texture2D(uBgSmall, vUv).rgb * 0.4;
+      // ぬぐった跡のふちはガラスが少し歪む
+      float edge = smoothstep(0.0, 0.5, m) * smoothstep(1.0, 0.5, m);
+      vec3 sharp = texture2D(uBg, vUv + vec2(edge * 0.004, -edge * 0.003)).rgb * 1.35 + vec3(0.03, 0.035, 0.05);
+      // 曇り：白い膜と細かい水滴
+      vec2 g = gl_FragCoord.xy / 3.5;
+      vec2 c = floor(g), f = fract(g); vec2 r = h22(c);
+      float drop = (1.0 - smoothstep(0.1, 0.32, length(f - r))) * step(0.5, h21(c + 3.0));
+      float haze = 0.16 + noise(vUv * vec2(6.0, 4.0) + uTime * 0.01) * 0.08;
+      vec3 fog = blur * 0.75 + vec3(0.72, 0.76, 0.84) * haze + drop * 0.03;
+      vec3 col = mix(fog, sharp, smoothstep(0.08, 0.85, m));
+      // しずくの頭のハイライト
+      vec2 p = gl_FragCoord.xy;
+      for (int i = 0; i < ${DRIPS}; i++) {
+        vec3 dr = uDrips[i];
+        if (dr.z <= 0.0) continue;
+        float d = length((p - dr.xy) * vec2(1.0, 0.8));
+        float body = 1.0 - smoothstep(dr.z * 0.55, dr.z * 0.75, d);
+        float hl = 1.0 - smoothstep(0.0, dr.z * 0.25, length(p - dr.xy - vec2(-dr.z * 0.2, dr.z * 0.2)));
+        col = mix(col, texture2D(uBg, vUv + (dr.xy - p) * px * 3.0).rgb * 1.15, body * 0.85) + hl * 0.35;
+      }
+      // 室内側の暖かい映り込み
+      col += vec3(0.08, 0.04, 0.01) * smoothstep(0.6, 0.0, vUv.y) * (1.0 - m * 0.6);
+      gl_FragColor = vec4(col, 1.0);
+    }`,
+});
+const finalScene = quad(finalMat);
+
+// ---------- レンダーターゲット ----------
+const rtOpts = { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false };
+let bgRT, bgSmallRT, maskA, maskB;
+function makeTargets() {
+  const w = Math.floor(innerWidth * PR), h = Math.floor(innerHeight * PR);
+  [bgRT, bgSmallRT, maskA, maskB].forEach(t => t && t.dispose());
+  bgRT = new THREE.WebGLRenderTarget(w, h, rtOpts);
+  bgSmallRT = new THREE.WebGLRenderTarget(Math.ceil(w / 8), Math.ceil(h / 8), rtOpts);
+  maskA = new THREE.WebGLRenderTarget(w, h, rtOpts); maskB = new THREE.WebGLRenderTarget(w, h, rtOpts);
+  renderer.setRenderTarget(maskA); renderer.setClearColor(0x000000, 1); renderer.clear();
+  renderer.setRenderTarget(maskB); renderer.clear(); renderer.setRenderTarget(null);
+  bgU.uRes.value.set(w, h); mkU.uRes.value.set(w, h); fU.uRes.value.set(w, h);
+}
+
+// ---------- 入力 ----------
+const drips = Array.from({ length: DRIPS }, () => ({ x: -999, y: -999, r: 0, v: 0, life: 0 }));
+let pointer = null, last = null, wiped = 0;
+const toPx = e => new THREE.Vector2(e.clientX * PR, (innerHeight - e.clientY) * PR);
+renderer.domElement.addEventListener('pointerdown', e => { pointer = toPx(e); last = pointer.clone(); renderer.domElement.setPointerCapture(e.pointerId); });
+renderer.domElement.addEventListener('pointermove', e => {
+  if (e.buttons || e.pointerType !== 'mouse') pointer = toPx(e);
+});
+const up = () => { pointer = null; last = null; };
+renderer.domElement.addEventListener('pointerup', up);
+renderer.domElement.addEventListener('pointercancel', up);
+function spawnDrip(x, y) {
+  const d = drips.find(d => d.life <= 0); if (!d) return;
+  Object.assign(d, { x, y: y - 6 * PR, r: (5 + Math.random() * 4) * PR, v: (8 + Math.random() * 18) * PR, life: 2 + Math.random() * 5 });
+}
+
+// ---------- ループ ----------
+const clock = new THREE.Clock();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  bgU.uTime.value = t; fU.uTime.value = t;
+
+  renderer.setRenderTarget(bgRT); renderer.render(bgScene, cam);
+  renderer.setRenderTarget(bgSmallRT); renderer.render(bgScene, cam);
+
+  // しずく
+  for (let i = 0; i < DRIPS; i++) {
+    const d = drips[i];
+    if (d.life > 0) {
+      d.life -= dt; d.y -= d.v * dt * (0.4 + Math.random() * 1.2); d.x += (Math.random() - 0.5) * 0.6 * PR;
+      d.v *= Math.pow(0.85, dt);
+      mkU.uDrips.value[i].set(d.x, d.y, d.life > 0 ? d.r : 0);
+    } else mkU.uDrips.value[i].set(-999, -999, 0);
+  }
+  if (pointer) {
+    mkU.uA.value.copy(last || pointer); mkU.uB.value.copy(pointer);
+    const moved = last ? pointer.distanceTo(last) : 0;
+    wiped += moved;
+    if (moved > 3 && Math.random() < 0.04 + moved * 0.002) spawnDrip(pointer.x + (Math.random() - 0.5) * 20 * PR, pointer.y - 10 * PR);
+    last = pointer.clone();
+    if (wiped > 400) document.getElementById('hint').classList.add('hide');
+  } else { mkU.uA.value.set(-999, -999); mkU.uB.value.set(-999, -999); }
+  mkU.uR.value = (innerWidth < 640 ? 30 : 36) * PR;
+  mkU.uDt.value = dt;
+  mkU.uPrev.value = maskA.texture;
+  renderer.setRenderTarget(maskB); renderer.render(maskScene, cam);
+  [maskA, maskB] = [maskB, maskA];
+
+  fU.uBg.value = bgRT.texture; fU.uBgSmall.value = bgSmallRT.texture; fU.uMask.value = maskA.texture;
+  renderer.setRenderTarget(null); renderer.render(finalScene, cam);
+  requestAnimationFrame(frame);
+}
+function resize() { renderer.setSize(innerWidth, innerHeight); makeTargets(); }
+addEventListener('resize', resize);
+resize();
+frame();
+</script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Particle Town</title>
+<meta name="description" content="光の粒でできた街。触ると散って、また形に戻る。街・ツリー・雪の結晶・メッセージへと姿を変える。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #03040a; color: #dfe8ff; font-family: 'Outfit', sans-serif; }
+  canvas { display: block; touch-action: none; cursor: crosshair; }
+  .head { position: fixed; top: 24px; left: 24px; pointer-events: none; }
+  .head h1 { font-weight: 200; font-size: clamp(22px, 4vw, 32px); letter-spacing: .32em; }
+  .head p { margin-top: 8px; font-size: 13px; font-weight: 300; opacity: .55; letter-spacing: .06em; }
+  .back { position: fixed; top: 24px; right: 24px; color: #dfe8ff; opacity: .55; text-decoration: none; font-size: 13px; letter-spacing: .1em; }
+  .dots { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px;
+          border-radius: 999px; background: rgba(15,20,40,.5); border: 1px solid rgba(223,232,255,.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .dots button { font: inherit; font-size: 12px; letter-spacing: .1em; color: rgba(223,232,255,.6); background: none; border: none;
+                 padding: 7px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .dots button.on { color: #fff; background: rgba(223,232,255,.12); }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="head">
+  <h1>PARTICLE TOWN</h1>
+  <p>なぞると光が散る ・ クリックで次のかたちへ</p>
+</div>
+<a class="back" href="../">← index</a>
+<div class="dots" id="dots"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const MOBILE = innerWidth < 700;
+const N = MOBILE ? 32000 : 64000;
+
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#03040a');
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 200);
+camera.position.set(0, 9, 30);
+if (MOBILE) camera.position.set(0, 10, 44);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.enablePan = false; controls.target.set(0, 4, 0);
+controls.minDistance = 10; controls.maxDistance = 70; controls.maxPolarAngle = Math.PI * 0.55;
+controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+controls.touches = { ONE: null, TWO: THREE.TOUCH.DOLLY_ROTATE };
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.85, 0.5, 0.08);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// ---------- かたちを点で作る ----------
+const rnd = (a, b) => a + (b - a) * Math.random();
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const COL = {
+  ice: [0.62, 0.78, 1.0], white: [1, 1, 1], warm: [1.0, 0.68, 0.32], gold: [1.0, 0.8, 0.4], red: [1.0, 0.32, 0.3],
+  green: [0.4, 0.95, 0.6], cyan: [0.45, 0.9, 1.0], dim: [0.16, 0.2, 0.36],
+};
+// 線分（edges）・点群（spots）・ばらまき（scatter）を重みづけして N 点に配る
+function build(parts) {
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+  const total = parts.reduce((s, p) => s + p.weight, 0);
+  let i = 0;
+  for (const part of parts) {
+    const count = part === parts[parts.length - 1] ? N - i : Math.floor(N * part.weight / total);
+    for (let k = 0; k < count && i < N; k++, i++) {
+      const [p, c] = part.sample();
+      pos.set(p, i * 3); col.set(c, i * 3);
+    }
+  }
+  // 粒の並びをシャッフル（モーフが均一に混ざるように）
+  for (let a = N - 1; a > 0; a--) {
+    const b = Math.floor(Math.random() * (a + 1));
+    for (let j = 0; j < 3; j++) { [pos[a * 3 + j], pos[b * 3 + j]] = [pos[b * 3 + j], pos[a * 3 + j]]; [col[a * 3 + j], col[b * 3 + j]] = [col[b * 3 + j], col[a * 3 + j]]; }
+  }
+  return { pos, col };
+}
+function edgeSampler(segs, color, jitter = 0.03) {
+  const lens = segs.map(s => Math.hypot(s[3] - s[0], s[4] - s[1], s[5] - s[2]));
+  const cum = []; lens.reduce((a, l, i) => (cum[i] = a + l), 0);
+  const total = cum[cum.length - 1];
+  return () => {
+    const r = Math.random() * total;
+    let lo = 0, hi = cum.length - 1;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (cum[m] < r) lo = m + 1; else hi = m; }
+    const s = segs[lo], t = Math.random();
+    const c = typeof color === 'function' ? color(s) : color;
+    return [[s[0] + (s[3] - s[0]) * t + rnd(-jitter, jitter), s[1] + (s[4] - s[1]) * t + rnd(-jitter, jitter), s[2] + (s[5] - s[2]) * t + rnd(-jitter, jitter)], c];
+  };
+}
+const airSnow = (r, h) => () => { const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * r; return [[Math.cos(a) * d, rnd(0, h), Math.sin(a) * d], COL.dim]; };
+
+function boxEdges(x, y, z, w, h, d, ry = 0, out = []) {
+  const c = Math.cos(ry), s = Math.sin(ry);
+  const P = (px, py, pz) => [x + px * c + pz * s, y + py, z - px * s + pz * c];
+  const v = [P(-w / 2, 0, -d / 2), P(w / 2, 0, -d / 2), P(w / 2, 0, d / 2), P(-w / 2, 0, d / 2), P(-w / 2, h, -d / 2), P(w / 2, h, -d / 2), P(w / 2, h, d / 2), P(-w / 2, h, d / 2)];
+  for (const [a, b] of [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]) out.push([...v[a], ...v[b]]);
+  return { out, P };
+}
+
+// 1. 街
+function shapeTown() {
+  const edgesL = [], wins = [];
+  for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) {
+    if (Math.abs(i) <= 0 && Math.abs(j) <= 0) continue;
+    if (Math.hypot(i, j) > 3.4 || Math.random() < 0.15) continue;
+    const x = i * 3.2 + rnd(-0.3, 0.3), z = j * 3.2 + rnd(-0.3, 0.3), w = rnd(1.6, 2.3), d = rnd(1.5, 2.1), h = rnd(1.3, 2.8), rh = rnd(0.8, 1.4);
+    const ry = Math.abs(j) <= Math.abs(i) ? (j > 0 ? Math.PI : 0) : (i > 0 ? -Math.PI / 2 : Math.PI / 2);
+    const { P } = boxEdges(x, 0, z, w, h, d, ry, edgesL);
+    const ov = 0.15, a = P(-w / 2 - ov, h, d / 2 + ov), b = P(w / 2 + ov, h, d / 2 + ov), c2 = P(w / 2 + ov, h, -d / 2 - ov), e = P(-w / 2 - ov, h, -d / 2 - ov);
+    const r1 = P(0, h + rh, d / 2 + ov), r2 = P(0, h + rh, -d / 2 - ov);
+    edgesL.push([...a, ...r1], [...b, ...r1], [...c2, ...r2], [...e, ...r2], [...r1, ...r2]);
+    // 煙突
+    boxEdges(...P(w * 0.25, h + rh * 0.4, -d * 0.2), 0.25, 0.7, 0.25, ry, edgesL);
+    // 窓
+    const rows = h > 2.1 ? [0.55, 1.6] : [0.7];
+    for (const wy of rows) for (const wx of (w > 2 ? [-0.5, 0.5] : [0.3])) wins.push({ P, x: wx, y: wy, z: d / 2 + 0.02 });
+  }
+  // 中央のツリー
+  const tree = [];
+  for (let k = 0; k < 600; k++) { const t = k / 600, y = t * 6, r = 2.2 * (1 - t), a = t * Math.PI * 2 * 9; tree.push([Math.cos(a) * r, y, Math.sin(a) * r, Math.cos(a + 0.1) * r, y + 0.01, Math.sin(a + 0.1) * r]); }
+  const winSample = () => { const w = pick(wins); return [w.P(w.x + rnd(-0.22, 0.22), w.y + rnd(-0.25, 0.25), w.z), COL.warm]; };
+  const ground = () => { const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * 13; return [[Math.cos(a) * d, 0, Math.sin(a) * d], COL.dim]; };
+  return build([
+    { weight: 46, sample: edgeSampler(edgesL, COL.ice, 0.02) },
+    { weight: 16, sample: winSample },
+    { weight: 13, sample: edgeSampler(tree, () => pick([COL.green, COL.green, COL.red, COL.gold, COL.white]), 0.05) },
+    { weight: 15, sample: ground },
+    { weight: 10, sample: airSnow(16, 16) },
+  ]);
+}
+
+// 2. 大きなツリー
+function shapeTree() {
+  const H = 13, garland = [], body = [];
+  for (let g = 0; g < 3; g++) for (let k = 0; k < 800; k++) {
+    const t = k / 800, y = 1 + t * (H - 2), r = 5.2 * (1 - (y - 1) / (H - 0.5)), a = t * Math.PI * 2 * 5 + g * 2.1;
+    const t2 = (k + 1) / 800, y2 = 1 + t2 * (H - 2), r2 = 5.2 * (1 - (y2 - 1) / (H - 0.5)), a2 = t2 * Math.PI * 2 * 5 + g * 2.1;
+    garland.push([Math.cos(a) * r, y, Math.sin(a) * r, Math.cos(a2) * r2, y2, Math.sin(a2) * r2]);
+  }
+  const cone = () => { const y = 1 + Math.pow(Math.random(), 0.8) * (H - 1), maxR = 5.4 * (1 - (y - 1) / H); const a = Math.random() * Math.PI * 2, r = maxR * Math.sqrt(Math.random()) * 0.95 + maxR * 0.05;
+    const tier = ((y - 1) / H * 5) % 1; return [[Math.cos(a) * r * (0.75 + tier * 0.3), y, Math.sin(a) * r * (0.75 + tier * 0.3)], COL.green]; };
+  const orns = Array.from({ length: 60 }, () => { const y = rnd(1.5, H - 2), r = 5.2 * (1 - (y - 1) / H) * 0.95, a = Math.random() * Math.PI * 2; return [Math.cos(a) * r, y, Math.sin(a) * r, pick([COL.red, COL.gold, COL.cyan, COL.white])]; });
+  const orn = () => { const o = pick(orns), u = Math.random() * Math.PI * 2, v = Math.acos(rnd(-1, 1)), r = 0.28; return [[o[0] + Math.sin(v) * Math.cos(u) * r, o[1] + Math.cos(v) * r, o[2] + Math.sin(v) * Math.sin(u) * r], o[3]]; };
+  const star = [];
+  for (let k = 0; k < 10; k++) { const a = Math.PI / 2 + k * Math.PI / 5, b = Math.PI / 2 + (k + 1) * Math.PI / 5, ra = k % 2 ? 0.45 : 1.1, rb = k % 2 ? 1.1 : 0.45;
+    star.push([Math.cos(a) * ra, H + 0.6 + Math.sin(a) * ra, 0, Math.cos(b) * rb, H + 0.6 + Math.sin(b) * rb, 0]); }
+  const gifts = []; boxEdges(-3, 0, 2.5, 1.6, 1.2, 1.6, 0.4, gifts); boxEdges(2.6, 0, 2.8, 1.2, 1.6, 1.2, -0.3, gifts); boxEdges(0.5, 0, 4, 1, 0.8, 1, 0.9, gifts);
+  return build([
+    { weight: 34, sample: cone },
+    { weight: 22, sample: edgeSampler(garland, COL.warm, 0.06) },
+    { weight: 12, sample: orn },
+    { weight: 6, sample: edgeSampler(star, COL.gold, 0.06) },
+    { weight: 8, sample: edgeSampler(gifts, () => pick([COL.red, COL.gold, COL.white]), 0.03) },
+    { weight: 10, sample: () => { const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * 10; return [[Math.cos(a) * d, 0, Math.sin(a) * d], COL.dim]; } },
+    { weight: 8, sample: airSnow(14, 18) },
+  ]);
+}
+
+// 3. 雪の結晶
+function shapeFlake() {
+  const segs = [], cy = 6.5;
+  const arm = (ang, len) => {
+    const c = Math.cos(ang), s = Math.sin(ang), P = (u, v) => [u * c - v * s, cy + u * s + v * c, 0];
+    segs.push([...P(0, 0), ...P(len, 0)]);
+    for (const [at, bl] of [[0.3, 0.32], [0.5, 0.28], [0.7, 0.2], [0.86, 0.1]]) {
+      const u = len * at, b = len * bl;
+      segs.push([...P(u, 0), ...P(u + b * 0.5, b * 0.866)], [...P(u, 0), ...P(u + b * 0.5, -b * 0.866)]);
+      if (at === 0.5) { const u2 = u + b * 0.25, v2 = b * 0.433; segs.push([...P(u2, v2), ...P(u2 + b * 0.25, v2 + b * 0.05)], [...P(u2, -v2), ...P(u2 + b * 0.25, -v2 - b * 0.05)]); }
+    }
+  };
+  for (let k = 0; k < 6; k++) arm(k * Math.PI / 3 + Math.PI / 2, 6.5);
+  const hex = []; for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3, b = (k + 1) * Math.PI / 3; for (const r of [1.2, 2.0]) hex.push([Math.cos(a) * r, cy + Math.sin(a) * r, 0, Math.cos(b) * r, cy + Math.sin(b) * r, 0]); }
+  const thick = f => () => { const [p, c] = f(); p[2] += rnd(-0.12, 0.12); return [p, c]; };
+  return build([
+    { weight: 70, sample: thick(edgeSampler(segs, () => pick([COL.ice, COL.cyan, COL.white]), 0.06)) },
+    { weight: 14, sample: thick(edgeSampler(hex, COL.white, 0.05)) },
+    { weight: 16, sample: () => { const a = Math.random() * Math.PI * 2, d = 8 + Math.random() * 10; return [[Math.cos(a) * d, cy + Math.sin(a) * d * 0.6, rnd(-6, 6)], COL.dim]; } },
+  ]);
+}
+
+// 4. メッセージ
+function shapeText() {
+  const cv = document.createElement('canvas'), W = 1024, H = 512; cv.width = W; cv.height = H;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = '200 150px Outfit, sans-serif'; g.fillText('MERRY', W / 2, H * 0.3);
+  g.font = '200 118px Outfit, sans-serif'; g.fillText('CHRISTMAS', W / 2, H * 0.68);
+  const data = g.getImageData(0, 0, W, H).data, px = [];
+  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (data[(y * W + x) * 4 + 3] > 120) px.push([x, y]);
+  const scale = 22 / W;
+  return build([
+    { weight: 78, sample: () => { const [x, y] = pick(px); return [[(x - W / 2) * scale + rnd(-0.03, 0.03), 7 - (y - H / 2) * scale + rnd(-0.03, 0.03), rnd(-0.25, 0.25)], Math.random() < 0.8 ? COL.gold : COL.white]; } },
+    { weight: 22, sample: () => [[rnd(-20, 20), rnd(-4, 18), rnd(-10, 6)], COL.dim] },
+  ]);
+}
+
+// ---------- 粒子本体 ----------
+const RAYS = 10;
+const uniforms = {
+  uProg: { value: 1 }, uTime: { value: 0 }, uScale: { value: 1 }, uSize: { value: MOBILE ? 0.085 : 0.07 },
+  uRayO: { value: Array.from({ length: RAYS }, () => new THREE.Vector3(0, -999, 0)) },
+  uRayD: { value: Array.from({ length: RAYS }, () => new THREE.Vector3(0, 1, 0)) },
+  uRayAge: { value: new Array(RAYS).fill(99) },
+};
+const geo = new THREE.BufferGeometry();
+const aA = new THREE.BufferAttribute(new Float32Array(N * 3), 3), aB = new THREE.BufferAttribute(new Float32Array(N * 3), 3);
+const cA = new THREE.BufferAttribute(new Float32Array(N * 3), 3), cB = new THREE.BufferAttribute(new Float32Array(N * 3), 3);
+const aRand = new Float32Array(N * 4); for (let i = 0; i < N * 4; i++) aRand[i] = Math.random();
+geo.setAttribute('position', aB); geo.setAttribute('aA', aA); geo.setAttribute('cA', cA); geo.setAttribute('cB', cB);
+geo.setAttribute('aRand', new THREE.BufferAttribute(aRand, 4));
+const mat = new THREE.ShaderMaterial({
+  uniforms, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: `
+    attribute vec3 aA; attribute vec3 cA; attribute vec3 cB; attribute vec4 aRand;
+    uniform float uProg, uTime, uScale, uSize;
+    uniform vec3 uRayO[${RAYS}]; uniform vec3 uRayD[${RAYS}]; uniform float uRayAge[${RAYS}];
+    varying vec3 vCol; varying float vAlpha;
+    void main(){
+      float d = clamp((uProg - aRand.x * 0.45) / 0.55, 0.0, 1.0);
+      d = d * d * (3.0 - 2.0 * d);
+      vec3 p = mix(aA, position, d);
+      float arc = sin(d * 3.14159);
+      p += vec3(sin(aRand.z * 40.0) , 1.0 + aRand.y * 2.0, cos(aRand.z * 40.0)) * arc * (1.5 + aRand.w * 3.0);
+      p += vec3(sin(uTime * 0.6 + aRand.z * 30.0), sin(uTime * 0.5 + aRand.w * 30.0), cos(uTime * 0.55 + aRand.y * 30.0)) * 0.035;
+      float stir = 0.0;
+      for (int i = 0; i < ${RAYS}; i++) {
+        vec3 v = p - uRayO[i];
+        vec3 cl = uRayO[i] + uRayD[i] * dot(v, uRayD[i]);
+        vec3 away = p - cl; float dist = length(away);
+        float s = exp(-uRayAge[i] * 1.6) * (1.0 - smoothstep(0.0, 2.2, dist));
+        p += normalize(away + vec3(1e-4)) * s * (1.4 + aRand.y * 1.6) + vec3(0.0, s * 0.8, 0.0);
+        stir += s;
+      }
+      vCol = mix(cA, cB, d) * (1.0 + stir * 1.5);
+      vAlpha = (0.55 + 0.45 * sin(uTime * (1.0 + aRand.w * 2.0) + aRand.z * 60.0)) * (0.6 + 0.4 * aRand.y);
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_PointSize = clamp(uSize * (0.6 + aRand.w * 0.9) * uScale / -mv.z, 1.0, 14.0);
+      gl_Position = projectionMatrix * mv;
+    }`,
+  fragmentShader: `
+    varying vec3 vCol; varying float vAlpha;
+    void main(){ float r = length(gl_PointCoord - 0.5); if (r > 0.5) discard;
+      float a = pow(1.0 - smoothstep(0.0, 0.5, r), 1.6); gl_FragColor = vec4(vCol, a * vAlpha * 0.8); }`,
+});
+const points = new THREE.Points(geo, mat);
+points.frustumCulled = false;
+scene.add(points);
+
+const SHAPES = [
+  { name: 'TOWN', label: '街', make: shapeTown },
+  { name: 'TREE', label: 'ツリー', make: shapeTree },
+  { name: 'FLAKE', label: '結晶', make: shapeFlake },
+  { name: 'TEXT', label: 'メッセージ', make: shapeText },
+];
+const built = [];
+let cur = 0, lastSwitch = 0, lastTouch = 0;
+function get(i) { return built[i] ??= SHAPES[i].make(); }
+function go(i, now) {
+  const from = get(cur), to = get(i);
+  aA.array.set(from.pos); cA.array.set(from.col);
+  aB.array.set(to.pos); cB.array.set(to.col);
+  aA.needsUpdate = aB.needsUpdate = cA.needsUpdate = cB.needsUpdate = true;
+  uniforms.uProg.value = 0; cur = i; lastSwitch = now;
+  [...dots.children].forEach((b, k) => b.classList.toggle('on', k === i));
+}
+const dots = document.getElementById('dots');
+SHAPES.forEach((s, i) => { const b = document.createElement('button'); b.textContent = s.label; b.onclick = () => { if (i !== cur) go(i, clock.elapsedTime); lastTouch = clock.elapsedTime; }; dots.appendChild(b); });
+{ const s = get(0); aA.array.set(s.pos); aB.array.set(s.pos); cA.array.set(s.col); cB.array.set(s.col); dots.children[0].classList.add('on'); }
+document.fonts.load('200 100px Outfit').then(() => { built[3] = null; });
+
+// ---------- なぞる ----------
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let rayIdx = 0, lastRayT = 0, down = null;
+const inv = new THREE.Matrix4();
+function pushRay(e) {
+  const now = clock.elapsedTime;
+  if (now - lastRayT < 0.03) return;
+  lastRayT = now;
+  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  // 粒子はゆっくり回転しているので、オブジェクト空間の光線に直す
+  inv.copy(points.matrixWorld).invert();
+  const o = ray.ray.origin.clone().applyMatrix4(inv), d = ray.ray.direction.clone().transformDirection(inv);
+  uniforms.uRayO.value[rayIdx].copy(o); uniforms.uRayD.value[rayIdx].copy(d); uniforms.uRayAge.value[rayIdx] = 0;
+  rayIdx = (rayIdx + 1) % RAYS;
+  lastTouch = now;
+}
+renderer.domElement.addEventListener('pointermove', pushRay);
+renderer.domElement.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; pushRay(e); });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (down && e.button === 0 && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.t < 400) go((cur + 1) % SHAPES.length, clock.elapsedTime);
+  down = null;
+});
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+
+// ---------- ループ ----------
+const clock = new THREE.Clock();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  uniforms.uTime.value = t;
+  uniforms.uProg.value = Math.min(1, uniforms.uProg.value + dt / 3.2);
+  for (let i = 0; i < RAYS; i++) uniforms.uRayAge.value[i] += dt;
+  points.rotation.y = Math.sin(t * 0.08) * 0.5;
+  if (t - lastSwitch > 11 && t - lastTouch > 8) go((cur + 1) % SHAPES.length, t);
+  controls.update();
+  composer.render();
+  requestAnimationFrame(frame);
+}
+function resize() {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); bloom.setSize(innerWidth, innerHeight);
+  uniforms.uScale.value = innerHeight * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+}
+addEventListener('resize', resize);
+resize();
+frame();
+</script>
+</body>
+</html>

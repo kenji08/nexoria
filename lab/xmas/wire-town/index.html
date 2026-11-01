@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wire Town</title>
+<meta name="description" content="線だけで描かれた雪の街。家をクリックすると灯りがともる。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root { --fg: #cfe0ff; --dim: rgba(207,224,255,.55); --pill: rgba(10,16,32,.55); --line: rgba(207,224,255,.18); }
+  :root.day { --fg: #24324a; --dim: rgba(36,50,74,.6); --pill: rgba(255,255,255,.6); --line: rgba(36,50,74,.18); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #05070f; font-family: 'Outfit', sans-serif; color: var(--fg); }
+  canvas { display: block; touch-action: none; }
+  .head { position: fixed; top: 24px; left: 24px; pointer-events: none; transition: color .8s; }
+  .head h1 { font-weight: 200; font-size: clamp(22px, 4vw, 34px); letter-spacing: .32em; }
+  .head p { margin-top: 8px; font-size: 13px; font-weight: 300; color: var(--dim); letter-spacing: .08em; }
+  .back { position: fixed; top: 24px; right: 24px; color: var(--dim); text-decoration: none; font-size: 13px; letter-spacing: .1em; }
+  .bar { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 6px; align-items: center;
+         padding: 8px; border-radius: 999px; background: var(--pill); border: 1px solid var(--line); backdrop-filter: blur(10px);
+         -webkit-backdrop-filter: blur(10px); max-width: calc(100vw - 32px); flex-wrap: wrap; justify-content: center; }
+  .bar button { background: none; border: 1px solid transparent; color: var(--fg); font: inherit; font-size: 13px; padding: 8px 14px;
+                border-radius: 999px; cursor: pointer; letter-spacing: .06em; white-space: nowrap; }
+  .bar button:hover { border-color: var(--line); }
+  .bar label { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 0 10px; }
+  .bar input[type=range] { width: 90px; accent-color: #9fc0ff; }
+  .count { font-size: 12px; color: var(--dim); padding: 0 10px; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+  .merry { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; opacity: 0; transition: opacity 2.5s;
+           font-weight: 200; font-size: clamp(20px, 5vw, 60px); letter-spacing: .35em; white-space: nowrap; color: #ffe2b0; text-shadow: 0 0 30px rgba(255,190,110,.6); }
+  .merry.show { opacity: 1; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="head">
+  <h1>WIRE TOWN</h1>
+  <p>家をクリックすると灯りがともる ・ ドラッグで回す</p>
+</div>
+<a class="back" href="../">← index</a>
+<div class="merry" id="merry">MERRY CHRISTMAS</div>
+<div class="bar">
+  <button id="dayBtn">☀︎ 朝にする</button>
+  <label>❄︎ <input id="snow" type="range" min="0" max="1" step="0.01" value="0.55"></label>
+  <button id="soundBtn">🔔 音 ON</button>
+  <button id="rotBtn">↻ 自動回転</button>
+  <span class="count" id="count">灯り 0 / 0</span>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+// ---------- 乱数（毎回同じ街になるようにシード固定） ----------
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rand = mulberry32(20261225);
+const R = (a, b) => a + (b - a) * rand();
+const rnd = (a, b) => a + (b - a) * Math.random();
+
+// ---------- 基本セットアップ ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color();
+scene.fog = new THREE.Fog(0x05070f, 26, 62);
+
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 300);
+camera.position.set(19, 13, 19);
+if (innerWidth < 700) camera.position.multiplyScalar(1.45);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, 1.2, 0);
+controls.maxPolarAngle = Math.PI * 0.47;
+controls.minDistance = 7;
+controls.maxDistance = 55;
+controls.enablePan = false;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.35;
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.85, 0.5, 0.18);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// ---------- 色 ----------
+const C = {
+  nightBg: new THREE.Color('#05070f'), dayBg: new THREE.Color('#dde5ee'),
+  nightLine: new THREE.Color('#7d9ddb'), dayLine: new THREE.Color('#1f2c45'),
+  warm: new THREE.Color(2.4, 1.35, 0.55),
+};
+const bg = new THREE.Color(), lineColor = new THREE.Color();
+
+// ---------- 点描画用シェーダー（雪・煙・電球・星） ----------
+const pointScale = { value: 1 };
+function pointsMaterial(additive) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uScale: pointScale, uTint: { value: new THREE.Color(1, 1, 1) }, uAlpha: { value: 1 } },
+    vertexShader: `
+      attribute float aSize; attribute float aAlpha; attribute vec3 aColor;
+      varying float vAlpha; varying vec3 vColor; uniform float uScale;
+      void main(){ vAlpha=aAlpha; vColor=aColor; vec4 mv=modelViewMatrix*vec4(position,1.0);
+        gl_PointSize=clamp(aSize*uScale/-mv.z, 1.0, 22.0); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader: `
+      varying float vAlpha; varying vec3 vColor; uniform vec3 uTint; uniform float uAlpha;
+      void main(){ float d=length(gl_PointCoord-0.5); if(d>0.5) discard;
+        float a=1.0-smoothstep(0.0,0.5,d); gl_FragColor=vec4(vColor*uTint, a*vAlpha*uAlpha); }`,
+    transparent: true, depthWrite: false,
+    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+  });
+}
+function makePoints(n, additive) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  g.setAttribute('aColor', new THREE.BufferAttribute(new Float32Array(n * 3).fill(1), 3));
+  g.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(n), 1));
+  g.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(n), 1));
+  const p = new THREE.Points(g, pointsMaterial(additive));
+  p.frustumCulled = false;
+  scene.add(p);
+  return p;
+}
+
+// 寿命つき粒子（煙・屋根の雪・ソリの金粉）
+class Particles {
+  constructor(max, additive) {
+    this.max = max; this.pts = makePoints(max, additive); this.i = 0;
+    this.vel = new Float32Array(max * 3); this.life = new Float32Array(max); this.maxLife = new Float32Array(max).fill(1);
+    this.base = new Float32Array(max); this.grow = new Float32Array(max); this.grav = new Float32Array(max); this.a0 = new Float32Array(max);
+  }
+  emit(p, v, life, size, color, alpha, grav = 0, grow = 0) {
+    const i = this.i; this.i = (this.i + 1) % this.max;
+    const at = this.pts.geometry.attributes;
+    at.position.setXYZ(i, p.x, p.y, p.z); at.aColor.setXYZ(i, color.r, color.g, color.b);
+    this.vel.set([v.x, v.y, v.z], i * 3);
+    this.life[i] = life; this.maxLife[i] = life; this.base[i] = size; this.grow[i] = grow; this.grav[i] = grav; this.a0[i] = alpha;
+  }
+  update(dt, wind) {
+    const at = this.pts.geometry.attributes, pos = at.position.array;
+    for (let i = 0; i < this.max; i++) {
+      if (this.life[i] <= 0) { at.aAlpha.array[i] = 0; continue; }
+      this.life[i] -= dt;
+      const k = 1 - this.life[i] / this.maxLife[i];
+      this.vel[i * 3 + 1] += this.grav[i] * dt;
+      pos[i * 3] += (this.vel[i * 3] + wind * k) * dt; pos[i * 3 + 1] += this.vel[i * 3 + 1] * dt; pos[i * 3 + 2] += this.vel[i * 3 + 2] * dt;
+      at.aSize.array[i] = this.base[i] * (1 + this.grow[i] * k);
+      at.aAlpha.array[i] = this.a0[i] * Math.min(1, k * 6) * (1 - k);
+    }
+    at.position.needsUpdate = at.aSize.needsUpdate = at.aAlpha.needsUpdate = at.aColor.needsUpdate = true;
+  }
+}
+const puffs = new Particles(1800, false);
+const glows = new Particles(1200, true);
+
+// ---------- 線の素材（夜と朝で色が変わる・ホバーで明るくなる） ----------
+const lineMats = [];
+function lineMat(opacity = 0.85) {
+  const m = new THREE.LineBasicMaterial({ transparent: true, opacity, toneMapped: false });
+  m.userData = { boost: 0, target: 0 };
+  lineMats.push(m);
+  return m;
+}
+const edges = (parent, geo, mat, thr = 15) => { const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo, thr), mat); parent.add(e); return e; };
+function segs(parent, list, mat) { // list: [x1,y1,z1,x2,y2,z2, ...]
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(list, 3));
+  const l = new THREE.LineSegments(g, mat); parent.add(l); return l;
+}
+
+// ---------- 地面と道 ----------
+const groundMat = lineMat(0.35);
+const ground = new THREE.Group(); scene.add(ground);
+{
+  const ring = [];
+  const ringSeg = (r, n) => { for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, b = (i + 1) / n * Math.PI * 2; ring.push(Math.cos(a) * r, 0, Math.sin(a) * r, Math.cos(b) * r, 0, Math.sin(b) * r); } };
+  ringSeg(2.4, 64); ringSeg(13.4, 128);
+  const s0 = Math.sqrt(2.4 * 2.4 - 0.9 * 0.9), L = 13.4;
+  for (const sgn of [-1, 1]) for (const off of [-0.9, 0.9]) {
+    const e = Math.sqrt(L * L - off * off);
+    ring.push(off, 0, sgn * s0, off, 0, sgn * e);   // 南北の道
+    ring.push(sgn * s0, 0, off, sgn * e, 0, off);   // 東西の道
+  }
+  // 石畳のような短い線
+  for (let k = 3; k < 13; k += 0.9) for (const sgn of [-1, 1]) {
+    ring.push(-0.25, 0, sgn * k, 0.25, 0, sgn * k, sgn * k, 0, -0.25, sgn * k, 0, 0.25);
+  }
+  segs(ground, ring, groundMat);
+}
+const grid = new THREE.GridHelper(80, 80);
+grid.material = lineMat(0.07);
+grid.position.y = -0.01;
+scene.add(grid);
+
+// ---------- 家 ----------
+const houses = [], hitMeshes = [];
+const hitMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+const winGeo = new THREE.PlaneGeometry(1, 1);
+
+function addWindow(g, h, x, y, z, w, hgt, rotY = 0) {
+  const m = new THREE.MeshBasicMaterial({ color: 0x000000, toneMapped: false, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(winGeo, m);
+  mesh.scale.set(w, hgt, 1); mesh.position.set(x, y, z); mesh.rotation.y = rotY;
+  g.add(mesh);
+  const frame = new THREE.Group(); frame.position.copy(mesh.position); frame.rotation.y = rotY; g.add(frame);
+  const hw = w / 2, hh = hgt / 2, e = 0.004;
+  segs(frame, [-hw, -hh, e, hw, -hh, e, hw, -hh, e, hw, hh, e, hw, hh, e, -hw, hh, e, -hw, hh, e, -hw, -hh, e,
+               0, -hh, e, 0, hh, e, -hw, 0, e, hw, 0, e], h.mat);
+  h.windows.push({ mat: m, cur: 0, target: 0, at: 0, flick: Math.random() * 10 });
+}
+
+function makeHouse(x, z, rotY, church) {
+  const g = new THREE.Group();
+  const h = { group: g, mat: lineMat(), windows: [], lit: false, smokeT: Math.random(), kind: 'house' };
+  const w = church ? 1.5 : R(1.15, 1.75), d = church ? 2.1 : R(1.1, 1.6), ht = church ? 1.7 : R(0.85, 1.85);
+  const roofH = church ? 1.0 : R(0.55, 1.05), ov = 0.12;
+
+  const body = new THREE.BoxGeometry(w, ht, d); body.translate(0, ht / 2, 0); edges(g, body, h.mat);
+  const shape = new THREE.Shape(); shape.moveTo(-w / 2 - ov, 0); shape.lineTo(w / 2 + ov, 0); shape.lineTo(0, roofH); shape.closePath();
+  const roof = new THREE.ExtrudeGeometry(shape, { depth: d + ov * 2, bevelEnabled: false }); roof.translate(0, ht, -(d + ov * 2) / 2);
+  edges(g, roof, h.mat);
+
+  // 煙突
+  const cx = w * 0.26, cz = -d * 0.18;
+  const roofY = ht + roofH * (1 - Math.abs(cx) / (w / 2 + ov));
+  const ch = new THREE.BoxGeometry(0.2, 0.55, 0.2); ch.translate(cx, roofY + 0.12, cz); edges(g, ch, h.mat);
+  h.chimneyLocal = new THREE.Vector3(cx, roofY + 0.42, cz);
+  h.ridgeLocal = [new THREE.Vector3(0, ht + roofH, -d / 2), new THREE.Vector3(0, ht + roofH, d / 2)];
+
+  // 窓とドア（正面＝+z）
+  const fz = d / 2 + 0.006;
+  const upper = ht > 1.35;
+  const cols = w > 1.45 ? [-w * 0.27, w * 0.27] : [0];
+  if (upper) for (const c of cols) addWindow(g, h, c, ht * 0.73, fz, 0.26, 0.3);
+  const doorX = cols.length === 2 ? 0 : -w * 0.22;
+  segs(g, [doorX - 0.15, 0, fz, doorX - 0.15, 0.55, fz, doorX - 0.15, 0.55, fz, doorX + 0.15, 0.55, fz, doorX + 0.15, 0.55, fz, doorX + 0.15, 0, fz], h.mat);
+  if (cols.length === 2) { addWindow(g, h, -w * 0.33, 0.45, fz, 0.24, 0.28); addWindow(g, h, w * 0.33, 0.45, fz, 0.24, 0.28); }
+  else addWindow(g, h, w * 0.2, 0.45, fz, 0.24, 0.28);
+  if (roofH > 0.75) addWindow(g, h, 0, ht + roofH * 0.33, fz + ov, 0.2, 0.2);
+  // 側面の窓
+  for (let k = 0; k < (d > 1.35 ? 2 : 1); k++) addWindow(g, h, w / 2 + 0.006, ht * (upper ? 0.62 : 0.5), d > 1.35 ? (k ? 0.32 : -0.32) : 0, 0.26, 0.3, Math.PI / 2);
+
+  if (church) {
+    // 鐘楼と尖塔
+    const tw = 0.62, th = 1.5, tz = d / 2 - tw / 2;
+    const tower = new THREE.BoxGeometry(tw, th, tw); tower.translate(0, ht + roofH * 0.2 + th / 2, tz); edges(g, tower, h.mat);
+    const spire = new THREE.ConeGeometry(0.5, 1.5, 4, 1, true); spire.rotateY(Math.PI / 4); spire.translate(0, ht + roofH * 0.2 + th + 0.75, tz);
+    edges(g, spire, h.mat);
+    const top = ht + roofH * 0.2 + th + 1.5;
+    segs(g, [0, top, tz, 0, top + 0.45, tz, -0.14, top + 0.3, tz, 0.14, top + 0.3, tz], h.mat);
+    addWindow(g, h, 0, ht + roofH * 0.2 + th * 0.62, tz + tw / 2 + 0.006, 0.22, 0.34);
+    addWindow(g, h, -w / 2 - 0.006, ht * 0.55, 0.45, 0.2, 0.6, Math.PI / 2);
+    addWindow(g, h, -w / 2 - 0.006, ht * 0.55, -0.45, 0.2, 0.6, Math.PI / 2);
+    h.kind = 'church';
+  }
+
+  const hit = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, ht + roofH + (church ? 3 : 0.3), d + 0.3), hitMat);
+  hit.position.y = (ht + roofH + (church ? 3 : 0.3)) / 2; hit.userData.target = h; g.add(hit); hitMeshes.push(hit);
+
+  g.position.set(x, 0, z); g.rotation.y = rotY;
+  scene.add(g); g.updateMatrixWorld(true);
+  h.chimney = h.chimneyLocal.clone().applyMatrix4(g.matrixWorld);
+  h.ridge = h.ridgeLocal.map(v => v.clone().applyMatrix4(g.matrixWorld));
+  houses.push(h);
+  return h;
+}
+
+const CELL = 2.6;
+for (let i = -4; i <= 4; i++) for (let j = -4; j <= 4; j++) {
+  if (i === 0 || j === 0) continue;
+  if (Math.hypot(i, j) > 4.35) continue;
+  const church = i === -2 && j === 2;
+  if (!church && rand() < 0.16) continue;
+  const x = i * CELL + R(-0.25, 0.25), z = j * CELL + R(-0.25, 0.25);
+  let rotY;
+  if (Math.abs(j) <= Math.abs(i)) rotY = j > 0 ? Math.PI : 0;
+  else rotY = i > 0 ? -Math.PI / 2 : Math.PI / 2;
+  makeHouse(x, z, rotY + R(-0.06, 0.06), church);
+}
+
+// ---------- 広場のツリー ----------
+const tree = { kind: 'tree', lit: false, mat: lineMat(0.9), at: 0 };
+{
+  const g = new THREE.Group(); scene.add(g);
+  const tiers = [[1.85, 1.7, 1.15], [1.45, 1.5, 2.15], [1.05, 1.3, 3.0], [0.62, 1.1, 3.75]];
+  for (const [r, hh, y] of tiers) { const c = new THREE.ConeGeometry(r, hh, 12, 1, true); c.translate(0, y, 0); edges(g, c, tree.mat, 10); }
+  const trunk = new THREE.BoxGeometry(0.3, 0.5, 0.3); trunk.translate(0, 0.25, 0); edges(g, trunk, tree.mat);
+  // 星
+  const star = []; const sy = 4.55;
+  for (let k = 0; k < 10; k++) {
+    const a = k / 10 * Math.PI * 2 + Math.PI / 2, b = (k + 1) / 10 * Math.PI * 2 + Math.PI / 2;
+    const ra = k % 2 ? 0.14 : 0.34, rb = k % 2 ? 0.34 : 0.14;
+    star.push(Math.cos(a) * ra, sy + Math.sin(a) * ra, 0, Math.cos(b) * rb, sy + Math.sin(b) * rb, 0);
+  }
+  tree.starMat = new THREE.LineBasicMaterial({ toneMapped: false });
+  const s1 = segs(g, star, tree.starMat), s2 = s1.clone(); s2.rotation.y = Math.PI / 2; g.add(s2);
+  tree.star = [s1, s2];
+  // オーナメント（らせん）
+  const N = 90; tree.orn = makePoints(N, true); tree.ornOn = new Float32Array(N); tree.ornT = new Float32Array(N);
+  const at = tree.orn.geometry.attributes;
+  const palette = [new THREE.Color(2.6, 0.5, 0.45), new THREE.Color(2.4, 1.7, 0.5), new THREE.Color(0.6, 1.6, 2.6), new THREE.Color(2.2, 2.2, 2.2)];
+  for (let k = 0; k < N; k++) {
+    const t = k / N, y = 0.45 + t * 3.75, r = 1.85 * (1 - (y - 0.3) / 4.4) + 0.05, a = t * Math.PI * 2 * 7;
+    at.position.setXYZ(k, Math.cos(a) * r, y, Math.sin(a) * r);
+    const c = palette[k % palette.length]; at.aColor.setXYZ(k, c.r, c.g, c.b); at.aSize.array[k] = 0.16;
+  }
+  const hit = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 1.9, 4.9, 12), hitMat);
+  hit.position.y = 2.45; hit.userData.target = tree; scene.add(hit); hitMeshes.push(hit);
+}
+
+// ---------- 街灯 ----------
+const lamps = [];
+{
+  const g = new THREE.Group(); scene.add(g);
+  const mat = lineMat(0.8), list = [];
+  for (const k of [-11, -8, -5, 5, 8, 11]) {
+    lamps.push([1.25, k], [-1.25, -k], [k, -1.25], [-k, 1.25]);
+  }
+  for (const [x, z] of lamps) {
+    const sx = Math.sign(x) || 0, sz = Math.sign(z) || 0;
+    const inward = Math.abs(x) === 1.25 ? [-sx * 0.3, 0] : [0, -sz * 0.3];
+    list.push(x, 0, z, x, 1.5, z, x, 1.5, z, x + inward[0], 1.55, z + inward[1]);
+  }
+  segs(g, list, mat);
+  const bulbs = makePoints(lamps.length, true), at = bulbs.geometry.attributes;
+  lamps.forEach(([x, z], k) => {
+    const sx = Math.sign(x), sz = Math.sign(z);
+    const inward = Math.abs(x) === 1.25 ? [-sx * 0.3, 0] : [0, -sz * 0.3];
+    at.position.setXYZ(k, x + inward[0], 1.48, z + inward[1]); at.aColor.setXYZ(k, 2.4, 1.6, 0.8); at.aSize.array[k] = 0.32;
+  });
+  lamps.points = bulbs;
+}
+
+// ---------- 降る雪と星空 ----------
+const SNOW = 7000;
+const snow = makePoints(SNOW, false);
+const snowSpeed = new Float32Array(SNOW), snowPhase = new Float32Array(SNOW);
+{
+  const at = snow.geometry.attributes;
+  for (let i = 0; i < SNOW; i++) {
+    at.position.setXYZ(i, rnd(-18, 18), rnd(0, 22), rnd(-18, 18));
+    at.aSize.array[i] = rnd(0.03, 0.075); at.aAlpha.array[i] = rnd(0.35, 0.8);
+    snowSpeed[i] = rnd(0.6, 1.4); snowPhase[i] = rnd(0, 100);
+  }
+}
+const stars = makePoints(900, true);
+{
+  const at = stars.geometry.attributes;
+  for (let i = 0; i < 900; i++) {
+    const u = Math.random() * Math.PI * 2, v = rnd(0.08, 1) * Math.PI / 2, r = 120;
+    at.position.setXYZ(i, Math.cos(u) * Math.cos(v) * r, Math.sin(v) * r, Math.sin(u) * Math.cos(v) * r);
+    at.aSize.array[i] = rnd(0.25, 0.8); at.aAlpha.array[i] = rnd(0.15, 0.7);
+  }
+}
+
+// ---------- ソリ（全部の灯りがついたら飛ぶ） ----------
+const sleigh = new THREE.Group(); sleigh.visible = false; scene.add(sleigh);
+{
+  const L = []; const P = (a, b) => L.push(0, a[1], a[0], 0, b[1], b[0]);
+  const poly = pts => { for (let i = 0; i < pts.length - 1; i++) P(pts[i], pts[i + 1]); };
+  poly([[-1.3, 0], [0.9, 0], [1.2, 0.18], [1.15, 0.35]]);                                  // そり板
+  poly([[-1.1, 0], [-1.1, 0.15]]); poly([[0.6, 0], [0.6, 0.15]]);
+  poly([[-1.2, 0.15], [-1.25, 0.85], [-0.75, 0.85], [-0.45, 0.45], [0.55, 0.45], [0.85, 0.75], [0.8, 0.15], [-1.2, 0.15]]); // 車体
+  poly([[-0.9, 0.85], [-0.85, 1.25], [-0.55, 1.25], [-0.5, 0.85]]);                         // 荷物
+  const deer = ox => {
+    poly([[ox, 0.6], [ox + 0.9, 0.6]]);
+    poly([[ox + 0.05, 0.6], [ox - 0.1, 0.15]]); poly([[ox + 0.2, 0.6], [ox + 0.3, 0.12]]);
+    poly([[ox + 0.75, 0.6], [ox + 0.6, 0.15]]); poly([[ox + 0.85, 0.6], [ox + 1.0, 0.18]]);
+    poly([[ox + 0.9, 0.6], [ox + 1.15, 1.0], [ox + 1.4, 0.95]]);
+    poly([[ox + 1.12, 1.0], [ox + 1.0, 1.35], [ox + 0.85, 1.45]]); poly([[ox + 1.03, 1.27], [ox + 1.18, 1.42]]);
+  };
+  deer(2.0); deer(3.7);
+  poly([[1.15, 0.35], [2.1, 0.6]]); poly([[2.9, 0.6], [3.8, 0.6]]);
+  const m = new THREE.LineBasicMaterial({ color: new THREE.Color(2.4, 1.8, 0.9), toneMapped: false });
+  segs(sleigh, L, m);
+  sleigh.scale.setScalar(0.75);
+}
+let flight = null;
+function launchSleigh() {
+  flight = { t: 0, a0: Math.random() * Math.PI * 2 };
+  sleigh.visible = true;
+  jingle();
+  document.getElementById('merry').classList.add('show');
+  setTimeout(() => document.getElementById('merry').classList.remove('show'), 6000);
+}
+
+// ---------- 音 ----------
+let actx = null, soundOn = true;
+const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66];
+function bell(freq, when = 0, vol = 0.07) {
+  if (!soundOn) return;
+  actx ??= new (window.AudioContext || window.webkitAudioContext)();
+  const t = actx.currentTime + when;
+  for (const [mul, v, dec] of [[1, 1, 1.6], [2.76, 0.35, 0.6], [5.4, 0.12, 0.3]]) {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = freq * mul;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol * v, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dec + 0.05);
+  }
+}
+function jingle() { [0, 2, 4, 5, 4, 2, 4, 6].forEach((n, i) => bell(NOTES[n], i * 0.14, 0.06)); }
+
+// ---------- 操作 ----------
+const toWarm = new THREE.Color();
+function setHouse(h, on, delay = 0) {
+  h.lit = on;
+  const now = clock.elapsedTime;
+  h.windows.forEach((w, i) => { w.target = on ? (Math.random() < 0.88 ? 1 : 0.25) : 0; w.at = now + delay + i * 0.07 + Math.random() * 0.15; });
+}
+function setTree(on, delay = 0) {
+  tree.lit = on; tree.at = clock.elapsedTime + delay;
+  for (let k = 0; k < tree.ornT.length; k++) tree.ornT[k] = tree.at + (on ? k * 0.025 : (tree.ornT.length - k) * 0.008);
+}
+function roofSnow(h) {
+  const [a, b] = h.ridge, p = new THREE.Vector3(), v = new THREE.Vector3(), white = new THREE.Color(1, 1, 1);
+  for (let i = 0; i < 45; i++) {
+    p.lerpVectors(a, b, Math.random());
+    v.set(rnd(-1.2, 1.2), rnd(0.6, 1.8), rnd(-1.2, 1.2));
+    puffs.emit(p, v, rnd(0.9, 1.5), rnd(0.06, 0.12), white, 0.95, -4.5, 0);
+  }
+}
+function interact(target) {
+  if (target.kind === 'tree') {
+    setTree(!tree.lit);
+    if (tree.lit) [0, 2, 4, 6].forEach((n, i) => bell(NOTES[n], i * 0.09));
+  } else {
+    setHouse(target, !target.lit);
+    roofSnow(target);
+    bell(NOTES[Math.floor(Math.random() * NOTES.length)] * (target.lit ? 1 : 0.5));
+  }
+  controls.autoRotate = false; rotBtn.textContent = '↻ 自動回転';
+}
+
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+let hovered = null, down = null;
+function pick(e) {
+  mouse.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const hit = ray.intersectObjects(hitMeshes, false)[0];
+  return hit ? hit.object.userData.target : null;
+}
+renderer.domElement.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const t = pick(e); if (t) interact(t); }
+  down = null;
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  hovered = pick(e);
+  renderer.domElement.style.cursor = hovered ? 'pointer' : 'grab';
+});
+
+let nightTarget = 1, night = 1;
+const dayBtn = document.getElementById('dayBtn'), rotBtn = document.getElementById('rotBtn'), soundBtn = document.getElementById('soundBtn');
+dayBtn.onclick = () => {
+  nightTarget = nightTarget ? 0 : 1;
+  document.documentElement.classList.toggle('day', !nightTarget);
+  dayBtn.textContent = nightTarget ? '☀︎ 朝にする' : '☾ 夜にする';
+  if (nightTarget) { houses.forEach(h => setHouse(h, true, 1.2 + Math.random() * 4)); setTree(true, 5.5); }
+  else { houses.forEach(h => setHouse(h, false, Math.random() * 2)); setTree(false, 1); }
+};
+rotBtn.onclick = () => { controls.autoRotate = !controls.autoRotate; rotBtn.textContent = controls.autoRotate ? '■ 回転を止める' : '↻ 自動回転'; };
+rotBtn.textContent = '■ 回転を止める';
+soundBtn.onclick = () => { soundOn = !soundOn; soundBtn.textContent = soundOn ? '🔔 音 ON' : '🔕 音 OFF'; };
+const snowInput = document.getElementById('snow');
+const countEl = document.getElementById('count');
+
+// ---------- ループ ----------
+const clock = new THREE.Clock();
+let wasAllLit = false;
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  night += (nightTarget - night) * Math.min(1, dt * 1.2);
+
+  bg.lerpColors(C.dayBg, C.nightBg, night);
+  scene.background.copy(bg); scene.fog.color.copy(bg);
+  lineColor.lerpColors(C.dayLine, C.nightLine, night);
+  bloom.strength = 0.25 + night * 0.65;
+
+  for (const m of lineMats) { m.userData.boost += (m.userData.target - m.userData.boost) * Math.min(1, dt * 8); m.color.copy(lineColor).multiplyScalar(1 + m.userData.boost); }
+  for (const h of houses) h.mat.userData.target = (h === hovered ? 0.9 : 0) + (h.lit ? 0.18 * night : 0);
+  tree.mat.userData.target = (tree === hovered ? 0.9 : 0) + (tree.lit ? 0.3 : 0);
+
+  // 窓
+  let litCount = 0;
+  for (const h of houses) {
+    let on = 0;
+    for (const w of h.windows) {
+      if (t >= w.at) w.cur += (w.target - w.cur) * Math.min(1, dt * 4);
+      on = Math.max(on, w.cur);
+      const fl = 0.9 + 0.1 * Math.sin(t * 6 + w.flick) * Math.sin(t * 2.3 + w.flick * 3);
+      toWarm.copy(C.warm).multiplyScalar(fl * (0.45 + 0.55 * night));
+      w.mat.color.copy(bg).multiplyScalar(0.85).lerp(toWarm, w.cur);
+    }
+    if (h.lit) litCount++;
+    // 煙突の煙
+    if (on > 0.5) {
+      h.smokeT -= dt;
+      if (h.smokeT <= 0) {
+        h.smokeT = rnd(0.18, 0.35);
+        const c = night > 0.5 ? new THREE.Color(0.55, 0.62, 0.8) : new THREE.Color(0.5, 0.55, 0.65);
+        puffs.emit(h.chimney, new THREE.Vector3(rnd(-0.05, 0.05), rnd(0.35, 0.55), rnd(-0.05, 0.05)), rnd(2.8, 4), 0.18, c, 0.32, 0, 2.5);
+      }
+    }
+  }
+  countEl.textContent = `灯り ${litCount} / ${houses.length}`;
+  const allLit = litCount === houses.length;
+  if (allLit && !wasAllLit) setTimeout(launchSleigh, 1500);
+  wasAllLit = allLit;
+
+  // ツリー
+  {
+    const at = tree.orn.geometry.attributes;
+    for (let k = 0; k < tree.ornOn.length; k++) {
+      const goal = t >= tree.ornT[k] ? (tree.lit ? 1 : 0) : tree.ornOn[k];
+      tree.ornOn[k] += (goal - tree.ornOn[k]) * Math.min(1, dt * 6);
+      at.aAlpha.array[k] = tree.ornOn[k] * (0.75 + 0.25 * Math.sin(t * 3 + k));
+    }
+    at.aAlpha.needsUpdate = true;
+    const s = tree.lit && t > tree.at + 2.2 ? 1 : 0;
+    tree.starOn = (tree.starOn ?? 0) + (s - (tree.starOn ?? 0)) * Math.min(1, dt * 3);
+    tree.starMat.color.copy(lineColor).lerp(new THREE.Color(3, 2.2, 0.8), tree.starOn);
+    tree.star.forEach((s, i) => { s.rotation.y = t * 0.6 + i * Math.PI / 2; });
+  }
+
+  // 街灯
+  {
+    const at = lamps.points.geometry.attributes;
+    for (let k = 0; k < lamps.length; k++) at.aAlpha.array[k] = Math.max(0, Math.min(1, (night - 0.4) * 2.5 - (k % 6) * 0.05));
+    at.aAlpha.needsUpdate = true;
+  }
+
+  // 雪
+  const amount = +snowInput.value;
+  const wind = Math.sin(t * 0.13) * 0.4;
+  {
+    const at = snow.geometry.attributes, p = at.position.array;
+    const n = Math.floor(SNOW * amount);
+    snow.geometry.setDrawRange(0, n);
+    const speed = 0.5 + amount * 1.3;
+    for (let i = 0; i < n; i++) {
+      p[i * 3 + 1] -= snowSpeed[i] * speed * dt;
+      p[i * 3] += (Math.sin(t * 0.7 + snowPhase[i]) * 0.25 + wind) * dt;
+      p[i * 3 + 2] += Math.cos(t * 0.5 + snowPhase[i]) * 0.2 * dt;
+      if (p[i * 3 + 1] < 0) { p[i * 3 + 1] = 22; p[i * 3] = rnd(-18, 18); p[i * 3 + 2] = rnd(-18, 18); }
+    }
+    at.position.needsUpdate = true;
+    snow.material.uniforms.uTint.value.setRGB(1, 1, 1).lerp(new THREE.Color(0.55, 0.62, 0.75), 1 - night);
+  }
+  stars.material.uniforms.uAlpha.value = Math.max(0, night * 1.2 - 0.2) * 0.9;
+
+  // ソリ
+  if (flight) {
+    flight.t += dt / 10;
+    const a = flight.a0 + flight.t * Math.PI * 1.25, r = 15;
+    const pos = new THREE.Vector3(Math.cos(a) * r, 8 + Math.sin(flight.t * Math.PI) * 3, Math.sin(a) * r);
+    const ahead = new THREE.Vector3(Math.cos(a + 0.01) * r, pos.y, Math.sin(a + 0.01) * r);
+    sleigh.position.copy(pos); sleigh.lookAt(ahead);
+    for (let k = 0; k < 2; k++) glows.emit(pos, new THREE.Vector3(rnd(-0.3, 0.3), rnd(-0.6, -0.1), rnd(-0.3, 0.3)), rnd(1.2, 2.4), rnd(0.05, 0.12), new THREE.Color(1.3, 0.95, 0.45), 0.8, -0.3);
+    if (flight.t >= 1) { flight = null; sleigh.visible = false; }
+  }
+
+  puffs.update(dt, wind * 0.6);
+  glows.update(dt, 0);
+  controls.update();
+  composer.render();
+  requestAnimationFrame(frame);
+}
+
+function resize() {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); bloom.setSize(innerWidth, innerHeight);
+  pointScale.value = innerHeight * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+}
+addEventListener('resize', resize);
+resize();
+frame();
+</script>
+</body>
+</html>

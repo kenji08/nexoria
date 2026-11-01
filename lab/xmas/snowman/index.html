@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowman</title>
+<meta name="description" content="雪玉を転がすと大きくなる。3つ積んで、顔や帽子をつけて雪だるまを作る。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #c9d6e8; color: #24314a; font-family: 'Outfit', sans-serif; }
+  canvas { display: block; touch-action: none; }
+  .head { position: fixed; top: 24px; left: 24px; pointer-events: none; }
+  .head h1 { font-weight: 200; font-size: clamp(22px, 4vw, 32px); letter-spacing: .32em; }
+  .head p { margin-top: 8px; font-size: 13px; font-weight: 300; opacity: .7; letter-spacing: .06em; line-height: 1.7; }
+  .back { position: fixed; top: 24px; right: 24px; color: #24314a; opacity: .6; text-decoration: none; font-size: 13px; letter-spacing: .1em; }
+  .bar { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none; transition: .6s;
+         display: flex; gap: 4px; padding: 6px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 32px);
+         border-radius: 999px; background: rgba(255,255,255,.65); border: 1px solid rgba(36,49,74,.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .bar.show { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+  .bar button { font: inherit; font-size: 13px; letter-spacing: .06em; color: #24314a; background: none; border: 1px solid transparent; padding: 8px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .bar button:hover { border-color: rgba(36,49,74,.2); }
+  .bar button.done { opacity: .35; }
+  .toast { position: fixed; left: 50%; top: 22%; transform: translateX(-50%); font-size: 15px; letter-spacing: .12em; opacity: 0; transition: opacity .5s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: .85; }
+  .reset { position: fixed; right: 24px; bottom: 26px; font: inherit; font-size: 12px; letter-spacing: .1em; color: #24314a; opacity: .55; background: none; border: none; cursor: pointer; }
+  @media (max-width: 640px) { .reset { bottom: auto; top: 56px; } }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<div class="head">
+  <h1>SNOWMAN</h1>
+  <p>雪の上をドラッグすると雪玉が転がって大きくなる<br>小さい玉を大きい玉の上に落とすと積める</p>
+</div>
+<a class="back" href="../">← index</a>
+<button class="reset" id="reset">↺ はじめから</button>
+<div class="toast" id="toast"></div>
+<div class="bar" id="bar">
+  <button data-k="face">● 目と口</button>
+  <button data-k="nose">▲ にんじん</button>
+  <button data-k="arms">⟋ 枝の腕</button>
+  <button data-k="buttons">⋮ ボタン</button>
+  <button data-k="scarf">∞ マフラー</button>
+  <button data-k="hat">▀ 帽子</button>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95;
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xc9d6e8, 16, 40);
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 100);
+
+// 空
+{
+  const g = new THREE.SphereGeometry(60, 32, 16), c = document.createElement('canvas'); c.width = 4; c.height = 256;
+  const x = c.getContext('2d'), gr = x.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, '#6f86b8'); gr.addColorStop(0.45, '#b4c3dd'); gr.addColorStop(0.5, '#e8d6d0'); gr.addColorStop(1, '#e8d6d0');
+  x.fillStyle = gr; x.fillRect(0, 0, 4, 256);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  scene.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false })));
+}
+
+// 光
+scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x6f7fa3, 1.1));
+const sun = new THREE.DirectionalLight(0xffe2c4, 2.8);
+sun.position.set(-8, 10, 6); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 });
+sun.shadow.bias = -0.0005; sun.shadow.radius = 4;
+scene.add(sun);
+
+// ---------- 雪原（転がした跡を描くテクスチャ） ----------
+const FIELD = 28, TR = 1024;
+const trailCv = document.createElement('canvas'); trailCv.width = trailCv.height = TR;
+const tctx = trailCv.getContext('2d');
+function clearTrail() { tctx.fillStyle = '#ffffff'; tctx.fillRect(0, 0, TR, TR); trailTex.needsUpdate = true; }
+const trailTex = new THREE.CanvasTexture(trailCv); trailTex.colorSpace = THREE.SRGBColorSpace;
+clearTrail();
+const groundGeo = new THREE.PlaneGeometry(FIELD * 2.2, FIELD * 2.2, 160, 160);
+groundGeo.rotateX(-Math.PI / 2);
+{
+  const p = groundGeo.attributes.position, uv = groundGeo.attributes.uv;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i), d = Math.hypot(x, z);
+    const hill = Math.max(0, d - 11) * 0.12 * (Math.sin(x * 0.25) * 0.5 + Math.cos(z * 0.21) * 0.5 + 1);
+    p.setY(i, hill + Math.sin(x * 1.3) * Math.cos(z * 1.1) * 0.03);
+    uv.setXY(i, (x / FIELD + 0.5), 1 - (z / FIELD + 0.5));
+  }
+  groundGeo.computeVertexNormals();
+}
+trailTex.wrapS = trailTex.wrapT = THREE.ClampToEdgeWrapping;
+const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ color: 0xd9e1f0, map: trailTex, roughness: 0.95 }));
+ground.receiveShadow = true;
+scene.add(ground);
+function stampTrail(x, z, r) {
+  const u = (x / FIELD + 0.5) * TR, v = (z / FIELD + 0.5) * TR, rr = r / FIELD * TR * 0.8;
+  const g = tctx.createRadialGradient(u, v, 0, u, v, rr);
+  g.addColorStop(0, 'rgba(140,155,190,.4)'); g.addColorStop(0.7, 'rgba(170,182,212,.22)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  tctx.fillStyle = g; tctx.beginPath(); tctx.arc(u, v, rr, 0, Math.PI * 2); tctx.fill();
+  trailTex.needsUpdate = true;
+}
+
+// 木立
+{
+  const treeMat = new THREE.MeshStandardMaterial({ color: 0x35584a, roughness: 1, flatShading: true });
+  const snowMat = new THREE.MeshStandardMaterial({ color: 0xf8fbff, roughness: 1, flatShading: true });
+  for (let i = 0; i < 26; i++) {
+    const a = i / 26 * Math.PI * 2 + Math.random() * 0.2, d = 13 + Math.random() * 8;
+    const x = Math.cos(a) * d, z = Math.sin(a) * d;
+    if (z > 6) continue; // カメラ側には置かない
+    const s = 0.8 + Math.random() * 1.2, t = new THREE.Group();
+    for (let k = 0; k < 3; k++) {
+      const c = new THREE.Mesh(new THREE.ConeGeometry((1.3 - k * 0.32) * s, 1.5 * s, 7), treeMat); c.position.y = (1 + k * 0.85) * s; c.castShadow = true; t.add(c);
+      const cap = new THREE.Mesh(new THREE.ConeGeometry((0.8 - k * 0.2) * s, 0.7 * s, 7), snowMat); cap.position.y = (1.45 + k * 0.85) * s; t.add(cap);
+    }
+    t.position.set(x, Math.max(0, d - 11) * 0.12, z); scene.add(t);
+  }
+}
+
+// 降る雪
+const FLAKES = 1500;
+const snowGeo = new THREE.BufferGeometry(), sp = new Float32Array(FLAKES * 3);
+for (let i = 0; i < FLAKES; i++) sp.set([(Math.random() - 0.5) * 40, Math.random() * 16, (Math.random() - 0.5) * 40], i * 3);
+snowGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+const flakes = new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.85, depthWrite: false }));
+scene.add(flakes);
+
+// ---------- 雪玉 ----------
+const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, emissive: 0x2a3450, emissiveIntensity: 0.1 });
+// ゴツゴツした雪玉のジオメトリ
+const ballGeo = new THREE.IcosahedronGeometry(1, 4);
+{
+  const p = ballGeo.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = 1 + (Math.sin(v.x * 7) * Math.sin(v.y * 6) * Math.sin(v.z * 8)) * 0.035; v.multiplyScalar(n); p.setXYZ(i, v.x, v.y, v.z); }
+  ballGeo.computeVertexNormals();
+}
+const balls = [];
+function makeBall(x, z, r = 0.22) {
+  const holder = new THREE.Group(), mesh = new THREE.Mesh(ballGeo, ballMat);
+  mesh.castShadow = mesh.receiveShadow = true; holder.add(mesh);
+  const deco = new THREE.Group(); holder.add(deco);
+  scene.add(holder);
+  const b = { holder, mesh, deco, x, z, r, y: r, below: null, above: null, vy: 0, drop: null, squash: 0 };
+  mesh.userData.ball = b;
+  balls.push(b); place(b);
+  return b;
+}
+function place(b) {
+  b.holder.position.set(b.x, b.y, b.z);
+  b.mesh.scale.set(b.r * (1 + b.squash * 0.12), b.r * (1 - b.squash * 0.18), b.r * (1 + b.squash * 0.12));
+}
+const baseOf = b => { while (b.below) b = b.below; return b; };
+const topOf = b => { while (b.above) b = b.above; return b; };
+function stackHeight(b) { let n = 1; b = baseOf(b); while (b.above) { b = b.above; n++; } return n; }
+
+// ---------- 入力 ----------
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
+let drag = null;
+function groundAt(e) { ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); return ray.ray.intersectPlane(plane, hit) ? hit.clone() : null; }
+renderer.domElement.addEventListener('pointerdown', e => {
+  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  const picked = ray.intersectObjects(balls.map(b => b.mesh))[0];
+  const g = groundAt(e); if (!g) return;
+  renderer.domElement.setPointerCapture(e.pointerId);
+  if (picked) {
+    let b = picked.object.userData.ball;
+    const base = baseOf(b);
+    if (base.done && Object.values(base.done).some(Boolean)) {
+      // 飾りつけ済みの雪だるまは崩さず、手を振ってもらう（ドラッグで全体を移動）
+      wave(base); b = base;
+    } else if (b.below) { b.below.above = null; b.below = null; }   // 積まれた玉を持ち上げたら外す
+    drag = { b, off: new THREE.Vector3(b.x - g.x, 0, b.z - g.z), last: g, lift: 0 };
+  } else {
+    if (Math.hypot(g.x, g.z) > 8) return;
+    drag = { b: makeBall(g.x, g.z), off: new THREE.Vector3(), last: g, lift: 0, fresh: true };
+    toast('ころがして大きくしよう');
+  }
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  if (!drag) { hover(e); return; }
+  const g = groundAt(e); if (!g) return;
+  const b = drag.b, nx = g.x + drag.off.x, nz = g.z + drag.off.z;
+  const r = Math.hypot(nx, nz); const lim = 8;
+  const tx = r > lim ? nx / r * lim : nx, tz = r > lim ? nz / r * lim : nz;
+  // ほかの玉の上にカーソルを重ねたら、その上に持ち上げて「積める」状態にする
+  if (!b.above) {
+    const others = balls.filter(o => baseOf(o) !== b).map(o => o.mesh);
+    const h = ray.intersectObjects(others)[0];
+    if (h) {
+      const top = topOf(h.object.userData.ball);
+      drag.over = top;
+      b.x = top.x; b.z = top.z; b.y = top.y + top.r + b.r * 0.9 + 0.3; place(b);
+      return;
+    }
+    if (drag.over) { drag.over = null; b.x = tx; b.z = tz; b.y = b.r; place(b); return; }
+  }
+  const dx = tx - b.x, dz = tz - b.z, dist = Math.hypot(dx, dz);
+  if (dist < 1e-4) return;
+  // 上に何か乗っていたら一緒に動く（転がらずにすべる）
+  const carrying = !!b.above;
+  if (!carrying) {
+    const axis = new THREE.Vector3(dz, 0, -dx).normalize();
+    b.mesh.rotateOnWorldAxis(axis, dist / b.r);
+    if (b.r < 1.5) b.r = Math.min(1.5, b.r + dist * 0.035 * (1.2 - b.r * 0.5));
+    stampTrail(tx, tz, b.r);
+  }
+  b.x = tx; b.z = tz; b.y = b.r; place(b);
+  let a = b.above, below = b;
+  while (a) { a.x = below.x; a.z = below.z; a.y = below.y + below.r * 0.92 + a.r * 0.92; place(a); below = a; a = a.above; }
+  // ほかの玉にぶつかったら押しのける
+  for (const o of balls) {
+    if (o === b || baseOf(o) === b || o.below) continue;
+    const d = Math.hypot(o.x - b.x, o.z - b.z), min = (o.r + b.r) * 0.95;
+    if (d < min && !(b.r < o.r * 0.95)) { const k = (min - d) / (d || 1); moveStack(o, (o.x - b.x) * k, (o.z - b.z) * k); }
+  }
+});
+function moveStack(o, dx, dz) { let a = baseOf(o); while (a) { a.x += dx; a.z += dz; place(a); a = a.above; } }
+const release = () => {
+  if (!drag) return;
+  const b = drag.b, over = drag.over; drag = null;
+  // 自分より大きい玉の上なら積む
+  const target = over || balls.filter(o => o !== b && !o.above && baseOf(o) !== b && Math.hypot(o.x - b.x, o.z - b.z) < o.r * 0.9 + b.r * 0.4)
+                      .sort((a, c) => c.y - a.y)[0];
+  if (target) {
+    if (b.r < target.r * 0.98 && !b.above) {
+      b.below = target; target.above = b;
+      b.drop = { from: b.y + 0.4, t: 0 };
+      b.x = target.x; b.z = target.z;
+      setTimeout(() => {
+        const h = stackHeight(b);
+        if (h === 3) { toast('雪だるまの形になった！'); bar.classList.add('show'); current = baseOf(b); refreshBar(); }
+        else if (h === 2) toast('あとひとつ');
+        else if (h > 3) toast('たかい！');
+      }, 400);
+    } else {
+      toast('大きすぎて乗らない…');
+      const base = baseOf(target), a = Math.atan2(b.z - base.z, b.x - base.x) || Math.random() * 6;
+      b.x = base.x + Math.cos(a) * (base.r + b.r) * 1.05; b.z = base.z + Math.sin(a) * (base.r + b.r) * 1.05; b.y = b.r; place(b);
+    }
+  }
+};
+renderer.domElement.addEventListener('pointerup', release);
+renderer.domElement.addEventListener('pointercancel', release);
+function hover(e) {
+  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  renderer.domElement.style.cursor = ray.intersectObjects(balls.map(b => b.mesh))[0] ? 'grab' : 'crosshair';
+}
+
+// ---------- 飾りつけ ----------
+const bar = document.getElementById('bar');
+let current = null;
+const M = {
+  coal: new THREE.MeshStandardMaterial({ color: 0x1b1b22, roughness: 0.6 }),
+  carrot: new THREE.MeshStandardMaterial({ color: 0xf07a23, roughness: 0.6 }),
+  wood: new THREE.MeshStandardMaterial({ color: 0x5b3b25, roughness: 1 }),
+  scarf: new THREE.MeshStandardMaterial({ color: 0xc4302b, roughness: 0.9 }),
+  hat: new THREE.MeshStandardMaterial({ color: 0x1c1d27, roughness: 0.5 }),
+  band: new THREE.MeshStandardMaterial({ color: 0x2f7a52, roughness: 0.6 }),
+};
+function parts(base) { const a = [base]; while (a[a.length - 1].above) a.push(a[a.length - 1].above); return a; }
+// 飾りは「回転しない層」につけたいので、各玉の holder（位置だけ動く）に足す
+const ADD = {
+  face(head) {
+    const g = new THREE.Group();
+    for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 8), M.coal); e.position.set(s * 0.32, 0.22, 0.88); g.add(e); }
+    for (let i = 0; i < 5; i++) { const a = (i / 4 - 0.5) * 1.1; const m = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), M.coal); m.position.set(Math.sin(a) * 0.4, -0.3 + (1 - Math.cos(a)) * 0.35, 0.93); g.add(m); }
+    return g;
+  },
+  nose() { const n = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.6, 12), M.carrot); n.rotation.x = Math.PI / 2; n.position.set(0, 0.02, 1.2); n.castShadow = true; return n; },
+  arms(_, body) {
+    const g = new THREE.Group();
+    for (const s of [-1, 1]) {
+      const arm = new THREE.Group(); arm.position.set(s * 0.85, 0.25, 0); arm.rotation.z = s * -0.6;
+      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 1.5, 6), M.wood); stick.rotation.z = Math.PI / 2; stick.position.x = s * 0.7; stick.castShadow = true; arm.add(stick);
+      for (const f of [0.35, -0.25]) { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.4, 5), M.wood); t.position.set(s * 1.3, 0.12, 0); t.rotation.z = s * (0.9 + f); arm.add(t); }
+      arm.userData.side = s; g.add(arm);
+    }
+    g.userData.arms = true;
+    return g;
+  },
+  buttons() { const g = new THREE.Group(); for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), M.coal); const a = 0.3 - i * 0.32; b.position.set(0, Math.sin(a), Math.cos(a) * 0.98); g.add(b); } return g; },
+  scarf() {
+    const g = new THREE.Group();
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.13, 10, 28), M.scarf); ring.rotation.x = Math.PI / 2; ring.position.y = 0.84; ring.castShadow = true; g.add(ring);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.7, 0.07), M.scarf); tail.position.set(0.3, 0.5, 0.78); tail.rotation.set(-0.5, 0, 0.2); tail.castShadow = true; g.add(tail);
+    return g;
+  },
+  hat() {
+    const g = new THREE.Group();
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.06, 28), M.hat); brim.position.y = 0.82; g.add(brim);
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.58, 0.85, 28), M.hat); crown.position.y = 1.25; crown.castShadow = true; g.add(crown);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.585, 0.59, 0.16, 28), M.band); band.position.y = 0.95; g.add(band);
+    g.rotation.z = 0.12; g.position.x = -0.05;
+    return g;
+  },
+};
+const WHERE = { face: 2, nose: 2, hat: 2, scarf: 1, arms: 1, buttons: 1 };
+function refreshBar() {
+  const done = current?.done || {};
+  bar.querySelectorAll('button').forEach(b => b.classList.toggle('done', !!done[b.dataset.k]));
+}
+bar.addEventListener('click', e => {
+  const k = e.target.closest('button')?.dataset.k; if (!k || !current) return;
+  const ps = parts(current); if (ps.length < 3) return;
+  current.done ??= {};
+  const target = ps[WHERE[k]];
+  if (current.done[k]) { target.deco.remove(current.done[k]); current.done[k] = null; refreshBar(); return; }
+  const obj = ADD[k](ps[2], ps[1]);
+  // 飾りは玉の大きさに合わせる
+  obj.scale.setScalar(target.r);
+  obj.position.multiplyScalar(1);
+  obj.userData.pop = 0;
+  target.deco.add(obj); current.done[k] = obj;
+  refreshBar();
+  if (Object.values(current.done).filter(Boolean).length === 6) toast('メリークリスマス！ 雪だるまをクリックしてみて');
+});
+function wave(b) { const arms = parts(b)[1].deco.children.find(c => c.userData.arms); if (arms) arms.userData.wave = 1.6; }
+
+// ---------- 小物 ----------
+const toastEl = document.getElementById('toast'); let toastT;
+function toast(s) { toastEl.textContent = s; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 1800); }
+document.getElementById('reset').onclick = () => {
+  balls.forEach(b => scene.remove(b.holder)); balls.length = 0; current = null; bar.classList.remove('show'); clearTrail();
+};
+
+// ---------- ループ ----------
+const clock = new THREE.Clock();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  // 積まれた玉は毎フレーム下の玉に合わせる（下から順に）
+  for (const base of balls) {
+    if (base.below) continue;
+    for (let b = base.above; b; b = b.above) {
+      const below = b.below, to = below.y + below.r * 0.92 + b.r * 0.92;
+      b.x = below.x; b.z = below.z;
+      if (b.drop) {
+        b.drop.t += dt * 2.6; const k = Math.min(1, b.drop.t);
+        b.y = b.drop.from + (to - b.drop.from) * k * k;
+        if (k >= 1) { b.drop = null; b.squash = 1; below.squash = 0.6; }
+      } else b.y = to;
+      place(b);
+    }
+  }
+  for (const b of balls) {
+    if (b.squash > 0) { b.squash = Math.max(0, b.squash - dt * 3); place(b); }
+    // 飾りがポンと出る
+    for (const d of b.deco.children) {
+      d.userData.pop = Math.min(1, (d.userData.pop ?? 1) + dt * 4);
+      const s = b.r * (1 + Math.sin(d.userData.pop * Math.PI) * 0.25);
+      d.scale.setScalar(s);
+      if (d.userData.arms) {
+        const w = d.userData.wave || 0; d.userData.wave = Math.max(0, w - dt);
+        d.children.forEach(arm => { arm.rotation.z = arm.userData.side * -0.6 + (arm.userData.side > 0 && w > 0 ? Math.sin(t * 14) * 0.5 - 0.6 : 0); });
+      }
+    }
+  }
+  // 雪
+  const p = snowGeo.attributes.position.array;
+  for (let i = 0; i < FLAKES; i++) { p[i * 3 + 1] -= dt * (0.6 + (i % 7) * 0.08); p[i * 3] += Math.sin(t * 0.5 + i) * dt * 0.15; if (p[i * 3 + 1] < 0) p[i * 3 + 1] = 16; }
+  snowGeo.attributes.position.needsUpdate = true;
+  // カメラはほんの少しだけ揺らぐ
+  camera.position.set(Math.sin(t * 0.07) * 0.6, camera.userData.h, camera.userData.d);
+  camera.lookAt(0, camera.userData.ly, 0);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+function resize() {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  const narrow = innerWidth / innerHeight < 0.8;
+  camera.userData.ly = narrow ? 0.8 : 1.6;
+  camera.userData.h = narrow ? 8 : 5.2; camera.userData.d = narrow ? 12 : 10.5;
+  renderer.setSize(innerWidth, innerHeight);
+}
+addEventListener('resize', resize);
+resize();
+frame();
+</script>
+</body>
+</html>

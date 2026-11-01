@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snow Globe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root { --fg: #eef2ff; --dim: rgba(238,242,255,.55); --line: rgba(238,242,255,.18); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #080a12; color: var(--fg); font-family: 'Outfit', sans-serif;
+               touch-action: none; user-select: none; -webkit-user-select: none; }
+  canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  canvas.drag { cursor: grabbing; }
+  .top { position: fixed; top: 18px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: baseline; pointer-events: none; }
+  .top a { pointer-events: auto; color: var(--dim); font-size: 12px; letter-spacing: .2em; text-decoration: none; }
+  h1 { font-weight: 200; font-size: 15px; letter-spacing: .35em; }
+  .hint { position: fixed; left: 0; right: 0; bottom: 84px; text-align: center; font-size: 12px; letter-spacing: .14em; color: var(--dim); pointer-events: none; transition: opacity .8s; }
+  .bar { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: calc(100% - 32px); }
+  button { font: inherit; font-size: 12px; letter-spacing: .1em; color: var(--fg); background: rgba(255,255,255,.06); border: 1px solid var(--line);
+           border-radius: 999px; padding: 9px 16px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  button:hover { background: rgba(255,255,255,.12); }
+  button.on { background: rgba(255,214,150,.18); border-color: rgba(255,214,150,.5); }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="top"><h1>SNOW GLOBE</h1><a href="../">← XMAS LAB</a></div>
+<div class="hint" id="hint">つかんで振ると、雪が舞う</div>
+<div class="bar">
+  <button id="bShake">ふる</button>
+  <button id="bMusic">オルゴール</button>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#080a12');
+const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 100);
+
+const R = 1.3, GROUND = -0.78, BASE_TOP = -R * 0.8;
+
+// 奥のぼけた灯り
+const bokeh = new THREE.Mesh(new THREE.PlaneGeometry(30, 16), new THREE.ShaderMaterial({
+  depthWrite: false,
+  uniforms: { uTime: { value: 0 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
+  fragmentShader: `
+    varying vec2 vUv; uniform float uTime;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    void main(){
+      vec2 uv = vUv * vec2(30., 16.);
+      vec3 col = mix(vec3(.02,.025,.05), vec3(.05,.045,.08), vUv.y);
+      for (int k = 0; k < 2; k++) {
+        float s = k == 0 ? 1.6 : 2.7;
+        vec2 g = uv / s, id = floor(g), f = fract(g) - .5;
+        float r = h(id + float(k) * 7.);
+        if (r > .55) {
+          vec2 o = vec2(h(id + 1.3), h(id + 2.1)) - .5;
+          float d = length(f - o * .5);
+          vec3 c = r > .85 ? vec3(1., .55, .3) : r > .7 ? vec3(1., .82, .5) : vec3(.5, .7, 1.);
+          float tw = .7 + .3 * sin(uTime * (.6 + r) + r * 40.);
+          col += c * smoothstep(.28, .18, d) * .16 * tw * (1. - vUv.y * .4);
+        }
+      }
+      gl_FragColor = vec4(col, 1.);
+    }`
+}));
+bokeh.position.set(0, 1.5, -9);
+scene.add(bokeh);
+
+// テーブル
+const table = new THREE.Mesh(new THREE.CircleGeometry(14, 64), new THREE.MeshStandardMaterial({ color: '#20140f', roughness: 0.55, metalness: 0.1 }));
+table.rotation.x = -Math.PI / 2; table.position.y = BASE_TOP - 0.55;
+scene.add(table);
+
+scene.add(new THREE.HemisphereLight('#8aa0d8', '#1a1010', 0.55));
+const key = new THREE.DirectionalLight('#dfe8ff', 1.1); key.position.set(-3, 5, 4); scene.add(key);
+const rim = new THREE.DirectionalLight('#ffb070', 0.6); rim.position.set(4, 1, -3); scene.add(rim);
+
+// 本体（揺らすのはこのグループ）
+const globe = new THREE.Group();
+scene.add(globe);
+const inner = new THREE.Group();   // 中の世界はゆっくり回る
+globe.add(inner);
+
+const wood = new THREE.MeshStandardMaterial({ color: '#5a3320', roughness: 0.45, metalness: 0.05 });
+const gold = new THREE.MeshStandardMaterial({ color: '#d6a54a', roughness: 0.3, metalness: 0.9 });
+const base = new THREE.Mesh(new THREE.CylinderGeometry(1.08, 1.32, 0.55, 64), wood);
+base.position.y = BASE_TOP - 0.275; globe.add(base);
+const ring = new THREE.Mesh(new THREE.TorusGeometry(1.06, 0.035, 12, 80), gold);
+ring.rotation.x = Math.PI / 2; ring.position.y = BASE_TOP - 0.02; globe.add(ring);
+const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.31, 0.025, 12, 80), gold);
+ring2.rotation.x = Math.PI / 2; ring2.position.y = BASE_TOP - 0.53; globe.add(ring2);
+
+const snowMat = new THREE.MeshStandardMaterial({ color: '#eef3fb', roughness: 1 });
+const mound = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), snowMat);
+const MR = Math.sqrt(R * R - GROUND * GROUND) - 0.02;
+mound.scale.set(MR, 0.22, MR); mound.position.y = GROUND; inner.add(mound);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(MR, 48), snowMat);
+floor.rotation.x = -Math.PI / 2; floor.position.y = GROUND; inner.add(floor);
+const groundAt = (x, z) => GROUND + 0.22 * Math.sqrt(Math.max(0, 1 - (x * x + z * z) / (MR * MR)));
+
+// 小さな家
+const house = new THREE.Group();
+const wall = new THREE.MeshStandardMaterial({ color: '#8c3b2e', roughness: 0.8 });
+const body = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.3, 0.34), wall); body.position.y = 0.15; house.add(body);
+const roofShape = new THREE.Shape(); roofShape.moveTo(-0.27, 0); roofShape.lineTo(0, 0.22); roofShape.lineTo(0.27, 0); roofShape.lineTo(-0.27, 0);
+const roof = new THREE.Mesh(new THREE.ExtrudeGeometry(roofShape, { depth: 0.42, bevelEnabled: false }), snowMat);
+roof.position.set(0, 0.3, -0.21); house.add(roof);
+const roofUnder = new THREE.Mesh(new THREE.ExtrudeGeometry(roofShape, { depth: 0.4, bevelEnabled: false }), new THREE.MeshStandardMaterial({ color: '#3a2420' }));
+roofUnder.scale.set(0.92, 0.85, 1); roofUnder.position.set(0, 0.295, -0.2); house.add(roofUnder);
+const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.06), wall); chimney.position.set(0.12, 0.45, -0.05); house.add(chimney);
+const winMat = new THREE.MeshStandardMaterial({ color: '#ffcf7a', emissive: '#ffb04a', emissiveIntensity: 2.4 });
+for (const x of [-0.11, 0.11]) { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.08), winMat); w.position.set(x, 0.17, 0.171); house.add(w); }
+const door = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.13), new THREE.MeshStandardMaterial({ color: '#3a2216' }));
+door.position.set(0, 0.065, 0.171); house.add(door);
+house.position.set(0.12, groundAt(0.12, -0.05) - 0.02, -0.05); house.rotation.y = -0.35;
+inner.add(house);
+const warm = new THREE.PointLight('#ffb050', 1.0, 2.2); warm.position.set(0.15, GROUND + 0.35, 0.35); inner.add(warm);
+
+// もみの木
+const treeMat = new THREE.MeshStandardMaterial({ color: '#1f5a3a', roughness: 0.9 });
+const starMat = new THREE.MeshStandardMaterial({ color: '#ffe08a', emissive: '#ffcc55', emissiveIntensity: 3 });
+function tree(x, z, s, star) {
+  const g = new THREE.Group();
+  for (let i = 0; i < 3; i++) {
+    const c = new THREE.Mesh(new THREE.ConeGeometry(0.17 - i * 0.04, 0.22, 10), treeMat);
+    c.position.y = 0.12 + i * 0.12; g.add(c);
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.1 - i * 0.025, 0.08, 10), snowMat);
+    cap.position.y = 0.2 + i * 0.12; g.add(cap);
+  }
+  if (star) { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.035), starMat); st.position.y = 0.46; g.add(st); }
+  g.scale.setScalar(s); g.position.set(x, groundAt(x, z) - 0.02, z);
+  inner.add(g);
+}
+tree(-0.48, 0.12, 1.25, true); tree(-0.2, -0.5, 1, false); tree(0.62, 0.22, 0.85, false); tree(0.5, -0.42, 1.05, false); tree(-0.7, -0.3, 0.75, false);
+
+// ガラス（縁が光り、反射のハイライトが乗る）
+const glass = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 48), new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false,
+  vertexShader: `varying vec3 vN; varying vec3 vV;
+    void main(){ vec4 wp = modelMatrix * vec4(position,1.); vN = normalize(mat3(modelMatrix) * normal); vV = normalize(cameraPosition - wp.xyz); gl_Position = projectionMatrix * viewMatrix * wp; }`,
+  fragmentShader: `varying vec3 vN; varying vec3 vV;
+    void main(){
+      vec3 n = normalize(vN);
+      float f = pow(1. - abs(dot(n, vV)), 3.);
+      float s1 = pow(max(dot(n, normalize(normalize(vec3(-.6,.8,.7)) + vV)), 0.), 160.) * 1.6;
+      float s2 = pow(max(dot(n, normalize(normalize(vec3(.8,.3,.6)) + vV)), 0.), 50.) * .35;
+      vec3 c = vec3(.7,.82,1.) * f * .8 + vec3(s1 + s2) + vec3(1.,.7,.4) * s2 * .5;
+      gl_FragColor = vec4(c, clamp(f * .5 + s1 + s2, 0., 1.));
+    }`
+}));
+glass.renderOrder = 10; globe.add(glass);
+
+// 雪とラメ（中の世界と一緒に回る）
+const N = innerWidth < 700 ? 1400 : 2200;
+const pos = new Float32Array(N * 3), vel = new Float32Array(N * 3), seed = new Float32Array(N), size = new Float32Array(N), still = new Uint8Array(N);
+function randomInSphere(i) {
+  let x, y, z; do { x = Math.random() * 2 - 1; y = Math.random() * 2 - 1; z = Math.random() * 2 - 1; } while (x * x + y * y + z * z > 1);
+  pos[i * 3] = x * (R - 0.08); pos[i * 3 + 1] = Math.max(groundAt(x, z) + 0.05, y * (R - 0.08)); pos[i * 3 + 2] = z * (R - 0.08);
+}
+for (let i = 0; i < N; i++) { randomInSphere(i); seed[i] = Math.random(); size[i] = seed[i] > 0.88 ? 0.018 : 0.012 + Math.random() * 0.02; }
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+const flakeMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false,
+  uniforms: { uTime: { value: 0 }, uScale: { value: 1 } },
+  vertexShader: `attribute float aSeed; attribute float aSize; uniform float uTime; uniform float uScale; varying float vSeed; varying float vTw;
+    void main(){
+      vec4 mv = modelViewMatrix * vec4(position, 1.);
+      gl_Position = projectionMatrix * mv;
+      vSeed = aSeed;
+      vTw = aSeed > .88 ? pow(.5 + .5 * sin(uTime * (3. + aSeed * 6.) + aSeed * 90.), 6.) : 0.;
+      gl_PointSize = min(18., aSize * uScale / -mv.z * (1. + vTw * 1.4));
+    }`,
+  fragmentShader: `varying float vSeed; varying float vTw;
+    void main(){
+      float d = length(gl_PointCoord - .5);
+      float a = smoothstep(.5, .1, d);
+      vec3 c = vSeed > .88 ? mix(vec3(1., .85, .5), vec3(1.4, 1.25, 1.), vTw) : vec3(.95, .97, 1.);
+      gl_FragColor = vec4(c, a * (vSeed > .88 ? .5 + vTw * .5 : .85));
+    }`
+});
+const flakes = new THREE.Points(geo, flakeMat);
+flakes.renderOrder = 5;
+inner.add(flakes);
+
+// 足元の影
+const sh = document.createElement('canvas'); sh.width = sh.height = 128;
+{ const g = sh.getContext('2d'), rg = g.createRadialGradient(64, 64, 10, 64, 64, 64); rg.addColorStop(0, 'rgba(0,0,0,.7)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128); }
+const shadow = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.6), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sh), transparent: true, depthWrite: false }));
+shadow.rotation.x = -Math.PI / 2; shadow.position.y = table.position.y + 0.002; scene.add(shadow);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.55, 0.6, 0.78);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+function fit() {
+  const a = innerWidth / innerHeight;
+  camera.aspect = a;
+  const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const dist = Math.max(2.5 / t, 1.95 / (t * a));   // 縦にも横にも収まる距離
+  camera.position.set(0, 0.55 + dist * 0.1, dist);
+  camera.lookAt(0, -0.42, 0);
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+  flakeMat.uniforms.uScale.value = innerHeight * renderer.getPixelRatio() / (2 * t);
+}
+addEventListener('resize', fit); fit();
+
+// ── 振る ──
+const off = new THREE.Vector2(), offV = new THREE.Vector2(), target = new THREE.Vector2();
+const accel = new THREE.Vector3();
+let drag = null;
+const cvs = renderer.domElement;
+cvs.addEventListener('pointerdown', e => {
+  cvs.setPointerCapture(e.pointerId); cvs.classList.add('drag');
+  drag = { x: e.clientX, y: e.clientY };
+  document.getElementById('hint').style.opacity = 0;
+  wake();
+});
+cvs.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const k = 3.2 / innerHeight;
+  target.set(THREE.MathUtils.clamp((e.clientX - drag.x) * k, -0.55, 0.55), THREE.MathUtils.clamp(-(e.clientY - drag.y) * k, -0.4, 0.4));
+});
+function release() { drag = null; target.set(0, 0); cvs.classList.remove('drag'); }
+cvs.addEventListener('pointerup', release); cvs.addEventListener('pointercancel', release);
+
+let autoShake = 0;
+document.getElementById('bShake').onclick = () => { autoShake = 1.1; wake(); document.getElementById('hint').style.opacity = 0; };
+
+// ── オルゴール（きよしこの夜・パブリックドメイン）──
+const SONG = [['G4',3],['A4',1],['G4',2],['E4',6],['G4',3],['A4',1],['G4',2],['E4',6],['D5',4],['D5',2],['B4',6],['C5',4],['C5',2],['G4',6],
+  ['A4',4],['A4',2],['C5',3],['B4',1],['A4',2],['G4',3],['A4',1],['G4',2],['E4',6],['A4',4],['A4',2],['C5',3],['B4',1],['A4',2],['G4',3],['A4',1],['G4',2],['E4',6],
+  ['D5',4],['D5',2],['F5',3],['D5',1],['B4',2],['C5',6],['E5',6],['C5',3],['G4',1],['E4',2],['G4',3],['F4',1],['D4',2],['C4',12]];
+const NOTE = n => { const m = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[n[0]] + (parseInt(n[1]) + 1) * 12; return 440 * Math.pow(2, (m - 69) / 12); };
+let ac = null, playing = false, playTimer = 0, songIdx = 0, tempo = 0.3, spin = 0;
+function tine(f, when) {
+  const g = ac.createGain(); g.connect(master);
+  g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(0.22, when + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, when + 2.4);
+  [[1, 1], [4.2, 0.18], [8.9, 0.05]].forEach(([h, a]) => {
+    const o = ac.createOscillator(), og = ac.createGain();
+    o.frequency.value = f * 2 * h * (1 + (Math.random() - 0.5) * 0.002); og.gain.value = a;
+    o.connect(og).connect(g); o.start(when); o.stop(when + 2.5);
+  });
+}
+let master;
+function music() {
+  ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+  if (!master) {
+    master = ac.createGain(); master.gain.value = 0.5;
+    // 箱の中で鳴っている響き
+    const conv = ac.createConvolver(), len = ac.sampleRate * 1.6, buf = ac.createBuffer(2, len, ac.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+    conv.buffer = buf; const wet = ac.createGain(); wet.gain.value = 0.35;
+    master.connect(ac.destination); master.connect(conv); conv.connect(wet).connect(ac.destination);
+  }
+  ac.resume();
+}
+const bMusic = document.getElementById('bMusic');
+bMusic.onclick = () => {
+  music();
+  playing = !playing; bMusic.classList.toggle('on', playing);
+  if (playing) { songIdx = 0; tempo = 0.3; playTimer = 0; }
+};
+function tickMusic(dt) {
+  if (!playing) return;
+  playTimer -= dt;
+  if (playTimer > 0) return;
+  const [n, len] = SONG[songIdx];
+  tine(NOTE(n), ac.currentTime + 0.02);
+  playTimer += len * tempo;
+  songIdx++;
+  // ねじが切れていくように、最後の数小節はゆっくりになる
+  if (songIdx > SONG.length - 10) tempo *= 1.06;
+  if (songIdx >= SONG.length) { playing = false; bMusic.classList.remove('on'); }
+}
+
+// ── 雪の動き ──
+function wake() { for (let i = 0; i < N; i++) if (still[i] && Math.random() < 0.25) still[i] = 0; }
+const tmp = new THREE.Vector3(), q = new THREE.Quaternion();
+function stepFlakes(dt, t) {
+  // 外の世界での加速度を、回っている中の座標へ戻す
+  q.copy(inner.quaternion).invert();
+  tmp.copy(accel).multiplyScalar(-0.55).applyQuaternion(q);
+  const shake = tmp.length();
+  const damp = Math.exp(-1.9 * dt);
+  for (let i = 0; i < N; i++) {
+    const j = i * 3;
+    if (still[i]) {
+      if (shake > 1.2 && Math.random() < shake * 0.02) { still[i] = 0; vel[j] = tmp.x * 0.1 + (Math.random() - .5) * .4; vel[j + 1] = 0.4 + Math.random() * 0.5; vel[j + 2] = tmp.z * 0.1 + (Math.random() - .5) * .4; }
+      else continue;
+    }
+    let x = pos[j], y = pos[j + 1], z = pos[j + 2];
+    const s = seed[i];
+    // ゆっくり落ちる。中の液体のうねりでふらつく
+    const sw = 0.12 + spin * 0.4;
+    vel[j] += (tmp.x + Math.sin(t * 0.7 + y * 3 + s * 20) * sw - z * spin * 0.6) * dt;
+    vel[j + 1] += (tmp.y - (0.2 + s * 0.12) + Math.sin(t * 0.5 + x * 4) * 0.05) * dt;
+    vel[j + 2] += (tmp.z + Math.cos(t * 0.6 + y * 3 + s * 13) * sw + x * spin * 0.6) * dt;
+    vel[j] *= damp; vel[j + 1] *= damp; vel[j + 2] *= damp;
+    x += vel[j] * dt; y += vel[j + 1] * dt; z += vel[j + 2] * dt;
+    const r = Math.hypot(x, y, z), lim = R - 0.05;
+    if (r > lim) {
+      const nx = x / r, ny = y / r, nz = z / r, vn = vel[j] * nx + vel[j + 1] * ny + vel[j + 2] * nz;
+      x = nx * lim; y = ny * lim; z = nz * lim;
+      if (vn > 0) { vel[j] -= 1.6 * vn * nx; vel[j + 1] -= 1.6 * vn * ny; vel[j + 2] -= 1.6 * vn * nz; }
+    }
+    const g = groundAt(x, z) + 0.012;
+    if (y < g) {
+      y = g;
+      if (Math.abs(vel[j + 1]) < 0.5 && shake < 1.2) still[i] = 1;
+      vel[j + 1] = Math.abs(vel[j + 1]) * 0.2; vel[j] *= 0.5; vel[j + 2] *= 0.5;
+    }
+    pos[j] = x; pos[j + 1] = y; pos[j + 2] = z;
+  }
+  geo.attributes.position.needsUpdate = true;
+}
+
+const prevV = new THREE.Vector2();
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now;
+  const t = now / 1000;
+  if (autoShake > 0) {
+    autoShake -= dt;
+    target.set(Math.sin(t * 22) * 0.35 * Math.min(1, autoShake * 2), Math.cos(t * 17) * 0.12 * Math.min(1, autoShake * 2));
+    if (autoShake <= 0) target.set(0, 0);
+  }
+  // ばねで追いかける。そのときの加速度で雪が舞う
+  prevV.copy(offV);
+  offV.x += (target.x - off.x) * 140 * dt; offV.y += (target.y - off.y) * 140 * dt;
+  offV.multiplyScalar(Math.exp(-9 * dt));
+  off.addScaledVector(offV, dt);
+  accel.set((offV.x - prevV.x) / dt, (offV.y - prevV.y) / dt, 0);
+  if (accel.length() > 40) accel.setLength(40);
+  globe.position.set(off.x, off.y, 0);
+  globe.rotation.z = -off.x * 0.35; globe.rotation.x = -off.y * 0.25;
+  shadow.position.x = off.x; shadow.material.opacity = 1 - Math.max(0, off.y) * 1.5;
+
+  tickMusic(dt);
+  spin += ((playing ? 1 : 0) - spin) * dt * 0.6;
+  inner.rotation.y += dt * (0.06 + spin * 0.35);
+  winMat.emissiveIntensity = 1.7 + Math.sin(t * 3.1) * 0.15 + Math.sin(t * 7.7) * 0.1;
+  stepFlakes(dt, t);
+  flakeMat.uniforms.uTime.value = t; bokeh.material.uniforms.uTime.value = t;
+  composer.render();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

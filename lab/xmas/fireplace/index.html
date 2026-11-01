@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fireplace</title>
+<meta name="description" content="ずっと眺めていられる暖炉。手をかざすと炎が強まり、薪をくべると火の粉が上がる。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #0d0806; color: #f6e7d6; font-family: 'Outfit', sans-serif; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .head { position: fixed; top: 24px; left: 24px; pointer-events: none; }
+  .head h1 { font-weight: 200; font-size: clamp(22px, 4vw, 32px); letter-spacing: .32em; }
+  .head p { margin-top: 8px; font-size: 13px; font-weight: 300; opacity: .55; letter-spacing: .06em; }
+  .back { position: fixed; top: 24px; right: 24px; color: #f6e7d6; opacity: .55; text-decoration: none; font-size: 13px; letter-spacing: .1em; }
+  .sound { position: fixed; right: 24px; bottom: 22px; font: inherit; font-size: 13px; letter-spacing: .08em; color: #f6e7d6; background: rgba(40,22,14,.6);
+           border: 1px solid rgba(246,231,214,.18); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="head">
+  <h1>FIREPLACE</h1>
+  <p>手をかざすと炎が強まる ・ 薪をドラッグしてくべる</p>
+</div>
+<a class="back" href="../">← index</a>
+<button class="sound" id="sound">🔈 パチパチ音を出す</button>
+
+<script>
+const cv = document.getElementById('c'), cx = cv.getContext('2d');
+let W, H, DPR, F; // F: 暖炉の寸法
+const rnd = (a, b) => a + (b - a) * Math.random();
+
+function resize() {
+  DPR = Math.min(devicePixelRatio, 2); W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const fw = Math.min(W * 0.72, 620), fh = fw * 0.62;
+  F = { x: W / 2 - fw / 2 - (W > 700 ? 60 : 0), y: (W > 700 ? H * 0.62 : H * 0.5) - fh / 2 + 40, w: fw, h: fh };
+  F.baseY = F.y + F.h - fh * 0.12; F.cx = F.x + F.w / 2;
+  layoutPile();
+}
+
+// ---------- 薪 ----------
+let logs = [], pile = [], dragging = null;
+function makeLog(x, y, len, ang) { return { x, y, len, ang, r: len * 0.13 + 6, burn: 0, inFire: false, seed: Math.random() * 100 }; }
+function layoutPile() {
+  pile = [];
+  const px = W > 700 ? F.x + F.w + 70 : F.cx, py = W > 700 ? F.baseY + 10 : Math.min(H - 90, F.y + F.h + 90);
+  const len = Math.min(110, F.w * 0.22);
+  for (let i = 0; i < 5; i++) {
+    const row = i < 3 ? 0 : 1, col = row ? i - 3 : i;
+    pile.push(makeLog(px + (col - (row ? 0.5 : 1)) * len * 0.3, py - row * len * 0.24, len, -0.05 + Math.random() * 0.1));
+  }
+  if (!logs.length) {
+    const l = Math.min(150, F.w * 0.3);
+    logs.push(Object.assign(makeLog(F.cx - l * 0.25, F.baseY - 8, l, 0.18), { inFire: true, burn: 0.2 }));
+    logs.push(Object.assign(makeLog(F.cx + l * 0.25, F.baseY - 10, l, -0.22), { inFire: true, burn: 0.15 }));
+    logs.push(Object.assign(makeLog(F.cx, F.baseY - 26, l * 0.9, 0.04), { inFire: true, burn: 0.1 }));
+  }
+}
+function drawLog(l) {
+  cx.save(); cx.translate(l.x, l.y); cx.rotate(l.ang);
+  const b = Math.min(1, l.burn);
+  const bark = `rgb(${92 - b * 70 | 0},${58 - b * 45 | 0},${36 - b * 30 | 0})`;
+  cx.fillStyle = bark;
+  cx.beginPath(); cx.roundRect(-l.len / 2, -l.r, l.len, l.r * 2, l.r); cx.fill();
+  // 木目
+  cx.strokeStyle = `rgba(0,0,0,${0.25 + b * 0.2})`; cx.lineWidth = 1.2;
+  for (let k = -1; k <= 1; k++) { cx.beginPath(); cx.moveTo(-l.len / 2 + l.r, k * l.r * 0.45); cx.bezierCurveTo(-l.len * 0.1, k * l.r * 0.45 + 3, l.len * 0.1, k * l.r * 0.45 - 3, l.len / 2 - l.r, k * l.r * 0.45); cx.stroke(); }
+  // 切り口
+  cx.fillStyle = b > 0.4 ? `rgb(${60 - b * 40},${30 - b * 20},${20 - b * 15})` : '#c9a27a';
+  cx.beginPath(); cx.ellipse(l.len / 2 - l.r * 0.3, 0, l.r * 0.55, l.r * 0.95, 0, 0, Math.PI * 2); cx.fill();
+  cx.strokeStyle = b > 0.4 ? 'rgba(255,120,40,.5)' : 'rgba(110,70,40,.7)';
+  for (const s of [0.6, 0.35]) { cx.beginPath(); cx.ellipse(l.len / 2 - l.r * 0.3, 0, l.r * 0.55 * s, l.r * 0.95 * s, 0, 0, Math.PI * 2); cx.stroke(); }
+  // 燃えている薪の熾火
+  if (l.inFire && b > 0.1) {
+    const t = performance.now() / 1000;
+    for (let i = 0; i < 6; i++) {
+      const ex = (-0.4 + i * 0.16) * l.len, a = (0.4 + 0.6 * Math.sin(t * 3 + l.seed + i * 2)) * b;
+      cx.fillStyle = `rgba(255,${120 + i * 10},40,${a * 0.7})`; cx.fillRect(ex, l.r * 0.4, l.len * 0.1, 2.5);
+    }
+  }
+  cx.restore();
+}
+
+// ---------- 炎の粒 ----------
+let flames = [], sparks = [], smoke = [];
+let heat = 0.55, heatTarget = 0.55, handHeat = 0;
+function emit(dt) {
+  const fuel = logs.filter(l => l.inFire).reduce((s, l) => s + Math.max(0, 1.2 - l.burn), 0);
+  const power = Math.min(1.6, 0.25 + fuel * 0.28) * (0.65 + heat * 0.6 + handHeat * 0.5);
+  const n = Math.round(power * 140 * dt * 2);
+  const span = F.w * 0.36;
+  for (let i = 0; i < n; i++) {
+    const u = (Math.random() + Math.random() + Math.random()) / 3 - 0.5;
+    flames.push({ x: F.cx + u * span * 2, y: F.baseY - 16 + rnd(-6, 6), vx: rnd(-12, 12) - u * 20, vy: -rnd(0.12, 0.26) * F.h * (0.7 + power * 0.45), life: 0, max: rnd(0.7, 1.3) * (1 - Math.abs(u) * 0.7) * (0.7 + power * 0.3), r: rnd(0.035, 0.07) * F.w });
+  }
+  if (Math.random() < dt * (2 + power * 6)) popSpark(1 + Math.floor(Math.random() * 3));
+  if (Math.random() < dt * 6) smoke.push({ x: F.cx + rnd(-30, 30), y: F.y + F.h * 0.25, vx: rnd(-6, 6), vy: -rnd(16, 30), life: 0, max: rnd(2, 3.5), r: rnd(10, 22) });
+  return power;
+}
+function popSpark(k, x, y) {
+  for (let i = 0; i < k; i++) sparks.push({ x: x ?? F.cx + rnd(-F.w * 0.2, F.w * 0.2), y: y ?? F.baseY - 30, vx: rnd(-60, 60), vy: -rnd(90, 260), life: 0, max: rnd(0.8, 2.2) });
+  crackle(k);
+}
+
+// ---------- 音 ----------
+let actx = null, soundOn = false, rumble = null;
+function crackle(k = 1) {
+  if (!soundOn || !actx) return;
+  for (let i = 0; i < k; i++) {
+    const t = actx.currentTime + i * rnd(0.01, 0.06), len = rnd(0.008, 0.03);
+    const buf = actx.createBuffer(1, Math.ceil(actx.sampleRate * len), actx.sampleRate), d = buf.getChannelData(0);
+    for (let j = 0; j < d.length; j++) d[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / d.length, 2);
+    const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    src.buffer = buf; f.type = 'bandpass'; f.frequency.value = rnd(1500, 5000); f.Q.value = 0.8; g.gain.value = rnd(0.15, 0.5);
+    src.connect(f).connect(g).connect(actx.destination); src.start(t);
+  }
+}
+function startRumble() {
+  const len = actx.sampleRate * 3, buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+  let last = 0; for (let i = 0; i < len; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; }
+  const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  src.buffer = buf; src.loop = true; f.type = 'lowpass'; f.frequency.value = 400; g.gain.value = 0.12;
+  src.connect(f).connect(g).connect(actx.destination); src.start(); rumble = g;
+}
+document.getElementById('sound').onclick = e => {
+  actx ??= new (window.AudioContext || window.webkitAudioContext)();
+  if (!rumble) startRumble();
+  soundOn = !soundOn; rumble.gain.value = soundOn ? 0.12 : 0;
+  e.target.textContent = soundOn ? '🔇 音を止める' : '🔈 パチパチ音を出す';
+};
+
+// ---------- 入力 ----------
+let pointer = null;
+const hitLog = (l, x, y) => { const dx = x - l.x, dy = y - l.y, c = Math.cos(-l.ang), s = Math.sin(-l.ang); const lx = dx * c - dy * s, ly = dx * s + dy * c; return Math.abs(lx) < l.len / 2 + 6 && Math.abs(ly) < l.r + 8; };
+cv.addEventListener('pointerdown', e => {
+  pointer = { x: e.clientX, y: e.clientY };
+  const l = [...pile].reverse().find(l => hitLog(l, e.clientX, e.clientY));
+  if (l) { dragging = l; l.ox = e.clientX - l.x; l.oy = e.clientY - l.y; cv.setPointerCapture(e.pointerId); return; }
+  // 炎の中をクリックすると突っつける
+  if (inFireArea(e.clientX, e.clientY)) { popSpark(4, e.clientX, e.clientY); heatTarget = Math.min(1, heatTarget + 0.08); }
+});
+cv.addEventListener('pointermove', e => {
+  pointer = { x: e.clientX, y: e.clientY };
+  if (dragging) { dragging.x = e.clientX - dragging.ox; dragging.y = e.clientY - dragging.oy; dragging.ang *= 0.9; }
+  cv.style.cursor = dragging ? 'grabbing' : pile.some(l => hitLog(l, e.clientX, e.clientY)) ? 'grab' : 'default';
+});
+cv.addEventListener('pointerup', () => {
+  if (dragging) {
+    if (inFireArea(dragging.x, dragging.y, 60)) {
+      pile.splice(pile.indexOf(dragging), 1);
+      const tgt = { x: F.cx + rnd(-F.w * 0.12, F.w * 0.12), y: F.baseY - 20 - logs.filter(l => l.inFire && l.burn < 1).length * 4 };
+      Object.assign(dragging, { inFire: true, burn: 0, drop: { ...tgt, t: 0 }, ang: rnd(-0.3, 0.3) });
+      logs.push(dragging);
+      setTimeout(() => { popSpark(14); heatTarget = Math.min(1, heatTarget + 0.25); }, 250);
+      if (pile.length === 0) setTimeout(() => layoutPileRefill(), 2500);
+    } else { layoutPileReturn(dragging); }
+  }
+  dragging = null;
+});
+cv.addEventListener('pointerleave', () => { pointer = null; });
+function inFireArea(x, y, pad = 0) { return x > F.x + F.w * 0.1 - pad && x < F.x + F.w * 0.9 + pad && y > F.y + F.h * 0.25 - pad && y < F.y + F.h + pad; }
+function layoutPileReturn(l) { const save = pile; layoutPile(); const home = pile[save.indexOf(l)] || pile[0]; pile = save; l.x = home.x; l.y = home.y; }
+function layoutPileRefill() { const old = logs; layoutPile(); logs = old; }
+
+// ---------- 描画 ----------
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.04, (now - last) / 1000); last = now; const t = now / 1000;
+
+  // 手をかざす
+  let target = 0;
+  if (pointer && !dragging) { const d = Math.hypot(pointer.x - F.cx, pointer.y - (F.baseY - F.h * 0.25)); target = Math.max(0, 1 - d / (F.w * 0.6)); }
+  handHeat += (target - handHeat) * Math.min(1, dt * 2);
+  heatTarget += (0.55 - heatTarget) * dt * 0.05;
+  heat += (heatTarget - heat) * Math.min(1, dt * 1.5);
+
+  for (const l of logs) if (l.inFire) {
+    l.burn += dt * 0.012 * (0.5 + heat);
+    if (l.drop) { l.drop.t += dt * 3; const e = Math.min(1, l.drop.t); l.x += (l.drop.x - l.x) * e * 0.3; l.y += (l.drop.y - l.y) * e * 0.3; if (e >= 1) delete l.drop; }
+  }
+  logs = logs.filter(l => !(l.inFire && l.burn > 1.6));
+  const power = emit(dt);
+  const flick = 0.85 + 0.15 * Math.sin(t * 13) * Math.sin(t * 7.3) + (Math.random() - 0.5) * 0.06;
+  const glow = Math.min(1.3, power) * flick;
+
+  // 部屋
+  cx.fillStyle = '#0d0806'; cx.fillRect(0, 0, W, H);
+  const room = cx.createRadialGradient(F.cx, F.baseY - F.h * 0.2, 10, F.cx, F.baseY - F.h * 0.2, Math.max(W, H) * (0.55 + glow * 0.2));
+  room.addColorStop(0, `rgba(255,140,60,${0.32 * glow})`); room.addColorStop(0.4, `rgba(140,60,25,${0.18 * glow})`); room.addColorStop(1, 'rgba(0,0,0,0)');
+  cx.fillStyle = room; cx.fillRect(0, 0, W, H);
+  // 床
+  cx.fillStyle = `rgba(60,32,20,${0.6})`; cx.fillRect(0, F.y + F.h, W, H - F.y - F.h);
+  const floor = cx.createLinearGradient(0, F.y + F.h, 0, H); floor.addColorStop(0, `rgba(255,120,50,${0.18 * glow})`); floor.addColorStop(1, 'rgba(0,0,0,0)');
+  cx.fillStyle = floor; cx.fillRect(0, F.y + F.h, W, H - F.y - F.h);
+
+  // 暖炉の枠（レンガ）
+  const fr = F.w * 0.14;
+  cx.fillStyle = '#3b221a'; cx.fillRect(F.x - fr, F.y - fr * 1.1, F.w + fr * 2, F.h + fr * 1.1);
+  cx.strokeStyle = 'rgba(0,0,0,.35)'; cx.lineWidth = 1;
+  const bw = fr * 0.9, bh = fr * 0.38;
+  for (let y = F.y - fr * 1.1, row = 0; y < F.y + F.h; y += bh, row++) for (let x = F.x - fr - (row % 2) * bw / 2; x < F.x + F.w + fr; x += bw) cx.strokeRect(Math.max(x, F.x - fr), y, Math.min(bw, F.x + F.w + fr - x), bh);
+  cx.fillStyle = `rgba(255,130,60,${0.12 * glow})`; cx.fillRect(F.x - fr, F.y - fr * 1.1, F.w + fr * 2, F.h + fr * 1.1);
+  // マントルピース
+  cx.fillStyle = '#5a3a28'; cx.fillRect(F.x - fr * 1.5, F.y - fr * 1.1 - 18, F.w + fr * 3, 18);
+  // 開口部
+  cx.save();
+  cx.beginPath(); cx.moveTo(F.x, F.y + F.h); cx.lineTo(F.x, F.y + F.h * 0.3); cx.quadraticCurveTo(F.cx, F.y - F.h * 0.12, F.x + F.w, F.y + F.h * 0.3); cx.lineTo(F.x + F.w, F.y + F.h); cx.closePath();
+  const inner = cx.createLinearGradient(0, F.y, 0, F.y + F.h); inner.addColorStop(0, '#050302'); inner.addColorStop(1, `rgb(${40 + glow * 40 | 0},${16 + glow * 10 | 0},8)`);
+  cx.fillStyle = inner; cx.fill(); cx.clip();
+
+  // 煙
+  for (const s of smoke) { s.life += dt; s.x += s.vx * dt; s.y += s.vy * dt; s.r += dt * 10; }
+  smoke = smoke.filter(s => s.life < s.max);
+  for (const s of smoke) { cx.fillStyle = `rgba(40,30,28,${0.25 * (1 - s.life / s.max)})`; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, Math.PI * 2); cx.fill(); }
+
+  // 薪（奥）
+  for (const l of logs) if (l.inFire) drawLog(l);
+
+  // 炎
+  cx.globalCompositeOperation = 'lighter';
+  for (const p of flames) {
+    p.life += dt; const k = p.life / p.max;
+    p.vx += Math.sin(t * 3 + p.y * 0.05) * 30 * dt + (F.cx - p.x) * 0.9 * dt;
+    p.x += p.vx * dt; p.y += p.vy * dt;
+  }
+  flames = flames.filter(p => p.life < p.max);
+  for (const p of flames) {
+    const k = p.life / p.max, r = p.r * (1 - k * 0.7);
+    const col = k < 0.12 ? [255, 225, 160] : k < 0.45 ? [255, 150, 50] : [220, 60, 15];
+    const a = (1 - k) * (k < 0.12 ? 0.12 : 0.2);
+    const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+    g.addColorStop(0, `rgba(${col[0]},${col[1]},${col[2]},${a})`); g.addColorStop(1, `rgba(${col[0]},${col[1]},${col[2]},0)`);
+    cx.fillStyle = g; cx.beginPath(); cx.arc(p.x, p.y, r, 0, Math.PI * 2); cx.fill();
+  }
+  // 炎の舌（奥から赤→橙→黄）
+  const layers = [[1, [255, 80, 20, 0.5], [190, 25, 10]], [0.78, [255, 150, 45, 0.55], [255, 80, 20]], [0.52, [255, 236, 180, 0.7], [255, 170, 60]]];
+  layers.forEach(([sc, c0, c1], li) => {
+    const count = 7;
+    for (let i = 0; i < count; i++) {
+      const u = i / (count - 1) - 0.5;
+      const x0 = F.cx + u * F.w * 0.52 * (1 - li * 0.18);
+      const w = F.w * 0.14 * (1 - Math.abs(u) * 0.45) * Math.sqrt(sc);
+      const wob = 0.72 + 0.28 * Math.sin(t * 5.3 + i * 1.7 + li) * Math.sin(t * 3.1 + i * 0.7);
+      const h = F.h * 0.62 * Math.min(1.25, power) * (1 - Math.abs(u) * 0.75) * sc * wob;
+      const sway = Math.sin(t * 2.7 + i * 2.1 + li * 0.8) * w * 0.55 + Math.sin(t * 7.1 + i) * w * 0.12;
+      const by = F.baseY - 10;
+      const g = cx.createLinearGradient(0, by, 0, by - h);
+      g.addColorStop(0, `rgba(${c0[0]},${c0[1]},${c0[2]},${c0[3]})`); g.addColorStop(0.55, `rgba(${c1[0]},${c1[1]},${c1[2]},${c0[3] * 0.6})`); g.addColorStop(1, `rgba(${c1[0]},${c1[1]},${c1[2]},0)`);
+      cx.fillStyle = g;
+      cx.beginPath(); cx.moveTo(x0 - w / 2, by);
+      cx.bezierCurveTo(x0 - w / 2, by - h * 0.45, x0 + sway - w * 0.2, by - h * 0.75, x0 + sway * 1.5, by - h);
+      cx.bezierCurveTo(x0 + sway + w * 0.2, by - h * 0.7, x0 + w / 2, by - h * 0.45, x0 + w / 2, by);
+      cx.closePath(); cx.fill();
+    }
+  });
+  // 熾火の床
+  const bed = cx.createRadialGradient(F.cx, F.baseY, 0, F.cx, F.baseY, F.w * 0.4);
+  bed.addColorStop(0, `rgba(255,120,40,${0.5 * glow})`); bed.addColorStop(1, 'rgba(255,60,10,0)');
+  cx.fillStyle = bed; cx.fillRect(F.x, F.baseY - F.h * 0.3, F.w, F.h * 0.5);
+  cx.globalCompositeOperation = 'source-over';
+  cx.restore();
+
+  // 火の粉（暖炉の外まで飛ぶ）
+  cx.globalCompositeOperation = 'lighter';
+  for (const s of sparks) { s.life += dt; s.vy += 40 * dt; s.vx += Math.sin(t * 5 + s.max * 10) * 40 * dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+  sparks = sparks.filter(s => s.life < s.max);
+  for (const s of sparks) { const a = 1 - s.life / s.max; cx.fillStyle = `rgba(255,${180 + a * 60 | 0},90,${a})`; cx.beginPath(); cx.arc(s.x, s.y, 1.2 + a * 1.4, 0, Math.PI * 2); cx.fill(); }
+  cx.globalCompositeOperation = 'source-over';
+
+  // 薪の山（外）
+  for (const l of pile) if (l !== dragging) drawLog(l);
+  if (dragging) { cx.save(); cx.shadowColor = 'rgba(0,0,0,.6)'; cx.shadowBlur = 20; drawLog(dragging); cx.restore(); }
+
+  // 炉格子
+  cx.strokeStyle = 'rgba(20,14,12,.9)'; cx.lineWidth = 3;
+  for (let i = 0; i <= 12; i++) { const x = F.x + F.w * 0.08 + i * (F.w * 0.84 / 12); cx.beginPath(); cx.moveTo(x, F.y + F.h); cx.lineTo(x, F.y + F.h * 0.72); cx.stroke(); }
+  cx.beginPath(); cx.moveTo(F.x + F.w * 0.06, F.y + F.h * 0.72); cx.lineTo(F.x + F.w * 0.94, F.y + F.h * 0.72); cx.stroke();
+  for (let i = 0; i < 12; i++) { const x = F.x + F.w * 0.08 + (i + 0.5) * (F.w * 0.84 / 12); cx.beginPath(); cx.arc(x, F.y + F.h * 0.72, 5, Math.PI, 0); cx.stroke(); }
+
+  // マントルの上のリース
+  { const wx = F.cx, wy = F.y - fr * 1.1 - 18 - Math.min(110, F.w * 0.2), wr = Math.min(56, F.w * 0.1);
+    cx.save(); cx.lineWidth = wr * 0.42; cx.strokeStyle = '#1f4a33'; cx.beginPath(); cx.arc(wx, wy, wr, 0, Math.PI * 2); cx.stroke();
+    for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; cx.fillStyle = i % 2 ? '#2d6646' : '#173a28'; cx.beginPath(); cx.ellipse(wx + Math.cos(a) * wr, wy + Math.sin(a) * wr, wr * 0.22, wr * 0.1, a + 0.6, 0, Math.PI * 2); cx.fill(); }
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + 0.3; cx.fillStyle = '#c2312b'; cx.beginPath(); cx.arc(wx + Math.cos(a) * wr * 1.05, wy + Math.sin(a) * wr * 1.05, wr * 0.07, 0, Math.PI * 2); cx.fill(); }
+    cx.fillStyle = '#b8362f'; cx.beginPath(); cx.moveTo(wx, wy + wr); cx.lineTo(wx - wr * 0.45, wy + wr * 0.7); cx.lineTo(wx - wr * 0.4, wy + wr * 1.35); cx.closePath(); cx.fill();
+    cx.beginPath(); cx.moveTo(wx, wy + wr); cx.lineTo(wx + wr * 0.45, wy + wr * 0.7); cx.lineTo(wx + wr * 0.4, wy + wr * 1.35); cx.closePath(); cx.fill();
+    cx.fillStyle = `rgba(255,140,60,${0.12 * glow})`; cx.beginPath(); cx.arc(wx, wy, wr * 1.3, 0, Math.PI * 2); cx.fill();
+    cx.restore(); }
+  // マントルの上の靴下
+  const sockY = F.y - fr * 1.1;
+  [[0.2, '#b8362f'], [0.5, '#2f6b4a'], [0.8, '#b8362f']].forEach(([u, c], i) => {
+    const sx = F.x - fr + (F.w + fr * 2) * u, sw = Math.min(34, F.w * 0.06), sh = sw * 1.9, sway = Math.sin(t * 1.2 + i) * 0.04;
+    cx.save(); cx.translate(sx, sockY); cx.rotate(sway);
+    cx.fillStyle = c; cx.beginPath(); cx.moveTo(-sw / 2, 0); cx.lineTo(-sw / 2, sh); cx.quadraticCurveTo(-sw / 2, sh + sw * 0.7, sw * 0.6, sh + sw * 0.5); cx.quadraticCurveTo(sw * 1.1, sh + sw * 0.1, sw / 2, sh - sw * 0.2); cx.lineTo(sw / 2, 0); cx.fill();
+    cx.fillStyle = '#efe6da'; cx.fillRect(-sw / 2 - 2, 0, sw + 4, sw * 0.45);
+    cx.fillStyle = `rgba(255,140,60,${0.15 * glow})`; cx.fillRect(-sw / 2 - 2, 0, sw + 4, sh);
+    cx.restore();
+  });
+
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', resize);
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
