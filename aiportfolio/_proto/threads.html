@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNOW LABS — threads prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#050507;color:#fafafa;font-family:'Inter',sans-serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hd{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:20px clamp(20px,5vw,48px);pointer-events:none}
+.hd span{font-size:12px;letter-spacing:.2em;color:#a1a1aa}
+.hd b{font-family:'Noto Serif JP',serif;font-weight:600;letter-spacing:.18em;font-size:15px;color:#fafafa}
+.ov{position:fixed;left:clamp(20px,5vw,48px);bottom:clamp(40px,9vh,88px);pointer-events:none}
+.ov p{margin:0 0 14px;font-size:11.5px;letter-spacing:.24em;color:#a1a1aa}
+.ov h1{margin:0;font-family:'Noto Serif JP',serif;font-weight:600;font-size:clamp(44px,9vw,120px);line-height:1;letter-spacing:.06em;white-space:nowrap}
+.hint{position:fixed;right:clamp(20px,5vw,48px);bottom:clamp(40px,9vh,88px);font-size:11px;letter-spacing:.2em;color:#71717a;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<header class="hd"><b>SNOW LABS</b><span>WORKS · LAB · CONTACT</span></header>
+<div class="ov">
+  <p>AI FILM STUDIO</p>
+  <h1>SNOW LABS</h1>
+</div>
+<div class="hint">MOVE / TOUCH</div>
+
+<script>
+/* 糸でできた水面: 正方格子で2D波動を解き、各行を1本の糸として描く */
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let W, H, S, R, C, cur, prev;
+
+function init() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  S = W < 700 ? 11 : 13;
+  R = Math.ceil(H / S) + 3;
+  C = Math.ceil(W / S) + 3;
+  cur = new Float32Array(R * C);
+  prev = new Float32Array(R * C);
+}
+
+function disturb(x, y, amt, rad) {
+  const c0 = Math.round(x / S) + 1, r0 = Math.round(y / S) + 1;
+  for (let dr = -rad; dr <= rad; dr++) {
+    for (let dc = -rad; dc <= rad; dc++) {
+      const r = r0 + dr, c = c0 + dc;
+      if (r < 1 || r >= R - 1 || c < 1 || c >= C - 1) continue;
+      const d = Math.hypot(dr, dc) / rad;
+      if (d > 1) continue;
+      cur[r * C + c] += amt * (1 - d * d);
+    }
+  }
+}
+
+function step() {
+  for (let r = 1; r < R - 1; r++) {
+    for (let c = 1; c < C - 1; c++) {
+      const i = r * C + c;
+      const n = (cur[i - 1] + cur[i + 1] + cur[i - C] + cur[i + C]) * 0.5 - prev[i];
+      prev[i] = n * 0.982;
+    }
+  }
+  const t = cur; cur = prev; prev = t;
+}
+
+const BUCKETS = 8;
+const paths = Array.from({ length: BUCKETS }, () => []);
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  for (const p of paths) p.length = 0;
+  for (let r = 1; r < R - 1; r++) {
+    const baseY = (r - 1) * S;
+    let px = -S, py = baseY + cur[r * C] * 0.5;
+    for (let c = 1; c < C; c++) {
+      const h = cur[r * C + c];
+      const x = (c - 1) * S, y = baseY + h * 0.5;
+      const b = Math.min(BUCKETS - 1, Math.floor(Math.abs(h) / 4));
+      paths[b].push(px, py, x, y);
+      px = x; py = y;
+    }
+  }
+  ctx.lineWidth = 1;
+  for (let b = 0; b < BUCKETS; b++) {
+    const seg = paths[b];
+    if (!seg.length) continue;
+    const a = 0.09 + b * 0.1;
+    ctx.strokeStyle = `rgba(${200 + b * 6},${225 + b * 3},255,${a})`;
+    ctx.beginPath();
+    for (let k = 0; k < seg.length; k += 4) {
+      ctx.moveTo(seg[k], seg[k + 1]);
+      ctx.lineTo(seg[k + 2], seg[k + 3]);
+    }
+    ctx.stroke();
+  }
+}
+
+let last = null, idleAt = 0;
+function pointer(e) {
+  const x = e.clientX, y = e.clientY;
+  if (last) {
+    const dist = Math.hypot(x - last.x, y - last.y);
+    const n = Math.max(1, Math.ceil(dist / S));
+    const amt = Math.min(dist, 60) * 0.35;
+    for (let k = 1; k <= n; k++) {
+      disturb(last.x + (x - last.x) * k / n, last.y + (y - last.y) * k / n, amt / n * 2, 2);
+    }
+  }
+  last = { x, y };
+  idleAt = performance.now();
+}
+addEventListener('pointermove', pointer, { passive: true });
+addEventListener('pointerdown', e => { last = null; disturb(e.clientX, e.clientY, 90, 3); pointer(e); });
+addEventListener('pointerleave', () => { last = null; });
+addEventListener('resize', init);
+
+/* 触っていない間も、ときどき雫が落ちる */
+let nextDrop = 0;
+function loop(now) {
+  if (now - idleAt > 1500 && now > nextDrop) {
+    disturb(Math.random() * W, Math.random() * H, 60 + Math.random() * 60, 2);
+    nextDrop = now + 900 + Math.random() * 1600;
+  }
+  step();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+init();
+if (reduce) draw(); else requestAnimationFrame(loop);
+</script>
+</body>
+</html>

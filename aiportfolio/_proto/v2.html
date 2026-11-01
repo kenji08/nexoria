@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNOW LABS — v2 prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#050507;color:#fafafa;font-family:'Inter','Noto Sans JP',sans-serif}
+a{color:inherit;text-decoration:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;transition:opacity .6s}
+main,.hd{position:relative;z-index:1}
+.serif{font-family:'Noto Serif JP',serif;font-weight:600}
+
+.hd{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:18px clamp(16px,5vw,48px);transition:background .3s}
+.hd.solid{background:rgba(5,5,7,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.hd-name{letter-spacing:.18em;font-size:15px;white-space:nowrap}
+.hd-nav{display:flex;gap:clamp(14px,3vw,28px);align-items:center;font-size:12px;letter-spacing:.14em;color:#a1a1aa}
+.hd-nav a:hover{color:#fff}
+.hd-cta{background:#fff;color:#000;padding:8px 18px;border-radius:99px;font-weight:600;letter-spacing:.04em;white-space:nowrap}
+@media(max-width:640px){.hd-nav .nl{display:none}}
+
+.hero{height:100vh;height:100svh;position:relative;pointer-events:none}
+.hero-body{position:absolute;left:clamp(16px,5vw,48px);bottom:clamp(40px,9vh,88px)}
+.kicker{margin:0 0 14px;font-size:11.5px;letter-spacing:.24em;color:#a1a1aa}
+.hero h1{margin:0;font-size:clamp(44px,9vw,120px);line-height:1;letter-spacing:.06em;white-space:nowrap}
+.hint{position:absolute;right:clamp(16px,5vw,48px);bottom:clamp(40px,9vh,88px);font-size:11px;letter-spacing:.2em;color:#71717a}
+
+.sec{padding:clamp(56px,9vw,112px) clamp(16px,5vw,48px)}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:28px}
+.sec-head h2{margin:0;font-size:clamp(22px,3vw,30px);letter-spacing:.06em}
+.sec-head span{font-size:12px;color:#71717a;letter-spacing:.06em}
+
+.sel{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.tile{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:#000;cursor:pointer}
+.tile.main{grid-column:1/-1;aspect-ratio:21/9}
+.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.55) 60%,rgba(0,0,0,.9))}
+.cap{position:absolute;left:20px;right:20px;bottom:16px;z-index:1}
+.tc{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;letter-spacing:.12em;color:#a1a1aa;margin-bottom:6px}
+.cap-title{margin:0 0 2px;font-size:17px}
+.tile.main .cap-title{font-size:24px}
+.cap-meta{margin:0;font-size:12px;color:#a1a1aa}
+@media(max-width:768px){.sel{grid-template-columns:1fr}.tile,.tile.main{aspect-ratio:16/10}}
+
+.log{columns:3 320px;column-gap:16px}
+.log-item{break-inside:avoid;margin:0 0 16px;min-height:120px;border-radius:14px}
+.log-item .twitter-tweet{margin:0 !important}
+.log-ph{border:1px dashed #27272a;border-radius:14px;padding:18px;font-size:12px;color:#71717a}
+.log-note{margin:0 0 24px;font-size:13px;color:#a1a1aa;line-height:1.8}
+
+.contact{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;border-top:1px solid rgba(255,255,255,.08)}
+.contact h2{margin:0 0 8px;font-size:clamp(22px,3.5vw,30px)}
+.contact p{margin:0;font-size:13.5px;color:#a1a1aa}
+.btn{background:#fff;color:#000;padding:15px 34px;border-radius:99px;font-weight:600;font-size:14px}
+
+.lb{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.lb.open{display:flex}
+.lb video{max-width:min(1080px,92vw);max-height:78vh;border-radius:12px;background:#000}
+.lb p{margin:0;font-size:14px;color:#a1a1aa}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<header class="hd">
+  <a href="#top" class="hd-name serif">SNOW LABS</a>
+  <nav class="hd-nav">
+    <a href="#works" class="nl">WORKS</a>
+    <a href="#log" class="nl" hidden>LOG</a><!-- 2026-10-13 非表示（けんじさん指定・X投稿の棚は一旦しまう） -->
+    <a href="#contact" class="hd-cta">相談する</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" id="top">
+    <div class="hero-body">
+      <p class="kicker">AI FILM STUDIO</p>
+      <h1 class="serif">SNOW LABS</h1>
+    </div>
+    <div class="hint">MOVE / TOUCH ・ SCROLL</div>
+  </section>
+
+  <section class="sec" id="works">
+    <div class="sec-head"><h2 class="serif">SELECTED</h2><span>代表作</span></div>
+    <div class="sel" id="sel"></div>
+  </section>
+
+  <!-- 2026-10-13 非表示（けんじさん指定）: X投稿を並べる LOG。hidden を外せば戻る -->
+  <section class="sec" id="log" hidden>
+    <div class="sec-head"><h2 class="serif">LOG</h2><span>最近の制作（Xより）</span></div>
+    <p class="log-note">※試作: 下のURL配列に1行足すだけで増える棚。URL待ち。</p>
+    <div class="log" id="logList"></div>
+  </section>
+
+  <section class="sec contact" id="contact">
+    <div>
+      <h2 class="serif">制作のご相談、まずは一言から。</h2>
+      <p>尺・商品・載せる場所の3つが分かれば、目安をお返しできます。</p>
+    </div>
+    <a class="btn" href="https://forms.gle/zLvEbzqVWQuzJLhJ7" target="_blank" rel="noopener">メッセージを送る</a>
+  </section>
+</main>
+
+<div class="lb" id="lb"><video id="lbv" controls playsinline></video><p id="lbt"></p></div>
+
+<script>
+/* ===== 作品データ: ここに1行足せば増える ===== */
+const SELECTED = [
+  { src: '../videos/work-42.mp4', poster: 'work-42.jpg', title: 'SUI', meta: 'アイデアが乾く前に。 — 架空のクリエイター向け補水飲料CM', main: true },
+  { src: '../videos/work-41.mp4', poster: '../posters/work-41.jpg', title: 'FREEZE', meta: 'スクランブル交差点の時間が止まる' },
+  { src: '../videos/work-24.mp4', poster: '../posters/work-24.jpg', title: 'Just Create', meta: "Don't wait for inspiration" },
+  { src: '../videos/work-22-top.mp4', poster: '../posters/work-22-top.jpg', title: 'KIOKKU', meta: '次世代メモリーカメラ' },
+  { src: '../videos/work-21.mp4', poster: 'work-21.jpg', title: 'アテリア・スカイガーデン', meta: '架空のゲームオープニング' },
+  { src: '../videos/work-lostchord.mp4', poster: '../posters/work-lostchord.jpg', title: 'LOST CHORD', meta: 'プレイに合わせて曲が変わる横スクロールシューティング（ブラウザで遊べる）', href: 'https://snowlabs-games.itch.io/lost-chord' },
+];
+const LOG = [
+  // 載せたいX投稿のURLを1行ずつ
+];
+
+/* ===== SELECTED ===== */
+const sel = document.getElementById('sel');
+const tc = s => { s = Math.floor(s); return '00:' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+SELECTED.forEach((w, i) => {
+  const el = document.createElement('div');
+  el.className = 'tile' + (w.main ? ' main' : '');
+  el.innerHTML = `<video src="${w.src}${w.poster ? '' : '#t=2'}" ${w.poster ? `poster="${w.poster}"` : ''} muted loop playsinline preload="metadata"></video>
+    <div class="cap"><div class="tc">TAKE ${String(i + 1).padStart(2, '0')} ・ <span class="d">--:--:--</span></div>
+    <p class="cap-title serif">${w.title}</p><p class="cap-meta">${w.meta}</p></div>`;
+  const v = el.querySelector('video');
+  v.addEventListener('loadedmetadata', () => { el.querySelector('.d').textContent = tc(v.duration); });
+  el.onmouseenter = () => v.play().catch(() => {});
+  el.onmouseleave = () => v.pause();
+  el.onclick = () => (w.href ? window.open(w.href, '_blank', 'noopener') : openLb(w));
+  sel.appendChild(el);
+});
+
+const lb = document.getElementById('lb'), lbv = document.getElementById('lbv');
+function openLb(w) {
+  lbv.src = w.src; lbv.muted = false;
+  document.getElementById('lbt').textContent = w.title + ' — ' + w.meta;
+  lb.classList.add('open');
+  lbv.play().catch(() => { lbv.muted = true; lbv.play().catch(() => {}); });
+}
+lb.onclick = e => { if (e.target !== lbv) { lb.classList.remove('open'); lbv.pause(); lbv.removeAttribute('src'); lbv.load(); } };
+addEventListener('keydown', e => { if (e.key === 'Escape') lb.click(); });
+
+/* ===== LOG: 見えてきたらXの埋め込みを読み込む ===== */
+const logList = document.getElementById('logList');
+if (!LOG.length) logList.innerHTML = '<div class="log-ph">ここにX投稿が並びます</div>';
+LOG.forEach(url => {
+  const d = document.createElement('div');
+  d.className = 'log-item';
+  d.innerHTML = `<blockquote class="twitter-tweet" data-theme="dark" data-dnt="true" data-conversation="none"><a href="${url.replace('x.com', 'twitter.com')}">${url}</a></blockquote>`;
+  logList.appendChild(d);
+});
+new IntersectionObserver((es, ob) => {
+  if (!es.some(e => e.isIntersecting)) return;
+  ob.disconnect();
+  const s = document.createElement('script');
+  s.src = 'https://platform.twitter.com/widgets.js'; s.async = true;
+  document.body.appendChild(s);
+}, { rootMargin: '400px' }).observe(logList);
+
+/* ===== 糸でできた水面（サイト全体の背景） ===== */
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let W, H, S, R, C, cur, prev;
+function init() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  S = W < 700 ? 11 : 13;
+  R = Math.ceil(H / S) + 3; C = Math.ceil(W / S) + 3;
+  cur = new Float32Array(R * C); prev = new Float32Array(R * C);
+}
+function disturb(x, y, amt, rad) {
+  const c0 = Math.round(x / S) + 1, r0 = Math.round(y / S) + 1;
+  for (let dr = -rad; dr <= rad; dr++) for (let dc = -rad; dc <= rad; dc++) {
+    const r = r0 + dr, c = c0 + dc;
+    if (r < 1 || r >= R - 1 || c < 1 || c >= C - 1) continue;
+    const d = Math.hypot(dr, dc) / rad; if (d > 1) continue;
+    cur[r * C + c] += amt * (1 - d * d);
+  }
+}
+function step() {
+  for (let r = 1; r < R - 1; r++) for (let c = 1; c < C - 1; c++) {
+    const i = r * C + c;
+    prev[i] = ((cur[i - 1] + cur[i + 1] + cur[i - C] + cur[i + C]) * 0.5 - prev[i]) * 0.982;
+  }
+  const t = cur; cur = prev; prev = t;
+}
+const B = 8, paths = Array.from({ length: B }, () => []);
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  for (const p of paths) p.length = 0;
+  for (let r = 1; r < R - 1; r++) {
+    const y0 = (r - 1) * S; let px = -S, py = y0 + cur[r * C] * 0.5;
+    for (let c = 1; c < C; c++) {
+      const h = cur[r * C + c], x = (c - 1) * S, y = y0 + h * 0.5;
+      paths[Math.min(B - 1, Math.floor(Math.abs(h) / 4))].push(px, py, x, y);
+      px = x; py = y;
+    }
+  }
+  for (let b = 0; b < B; b++) {
+    const s = paths[b]; if (!s.length) continue;
+    ctx.strokeStyle = `rgba(${200 + b * 6},${225 + b * 3},255,${0.09 + b * 0.1})`;
+    ctx.beginPath();
+    for (let k = 0; k < s.length; k += 4) { ctx.moveTo(s[k], s[k + 1]); ctx.lineTo(s[k + 2], s[k + 3]); }
+    ctx.stroke();
+  }
+}
+let last = null, idleAt = 0, nextDrop = 0, lastScroll = scrollY;
+addEventListener('pointermove', e => {
+  const x = e.clientX, y = e.clientY;
+  if (last) {
+    const dist = Math.hypot(x - last.x, y - last.y), n = Math.max(1, Math.ceil(dist / S)), amt = Math.min(dist, 60) * 0.7;
+    for (let k = 1; k <= n; k++) disturb(last.x + (x - last.x) * k / n, last.y + (y - last.y) * k / n, amt / n, 2);
+  }
+  last = { x, y }; idleAt = performance.now();
+}, { passive: true });
+addEventListener('pointerdown', e => { if (scrollY < H * 0.5) disturb(e.clientX, e.clientY, 90, 3); });
+addEventListener('pointerleave', () => { last = null; });
+/* スクロールすると水面が引っぱられる。ヒーローを過ぎたら背景として薄くする */
+addEventListener('scroll', () => {
+  const dy = scrollY - lastScroll; lastScroll = scrollY;
+  if (Math.abs(dy) > 2) disturb(Math.random() * W, dy > 0 ? H - S * 2 : S * 2, Math.min(Math.abs(dy), 80) * 0.6, 3);
+  cv.style.opacity = scrollY > H * 0.6 ? 0.45 : 1;
+  document.querySelector('.hd').classList.toggle('solid', scrollY > H * 0.6);
+}, { passive: true });
+addEventListener('resize', init);
+function loop(now) {
+  if (now - idleAt > 1500 && now > nextDrop) {
+    disturb(Math.random() * W, Math.random() * H, 60 + Math.random() * 60, 2);
+    nextDrop = now + 900 + Math.random() * 1600;
+  }
+  step(); draw(); requestAnimationFrame(loop);
+}
+init();
+if (reduce) draw(); else requestAnimationFrame(loop);
+</script>
+</body>
+</html>

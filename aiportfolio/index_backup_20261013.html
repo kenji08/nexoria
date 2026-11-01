@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNOW LABS — AI Film Studio</title>
+<meta name="description" content="商品広告・ショート動画をAIで制作。Commercial-ready AI video for brands.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SNOW LABS">
+<meta property="og:url" content="https://nexoria.lomo.jp/aiportfolio/">
+<meta property="og:title" content="SNOW LABS — AI Film Studio">
+<meta property="og:description" content="商品広告・ショート動画をAIで制作。Commercial-ready AI video for brands.">
+<meta property="og:image" content="https://nexoria.lomo.jp/aiportfolio/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SNOW LABS — AI Film Studio">
+<meta name="twitter:description" content="商品広告・ショート動画をAIで制作。Commercial-ready AI video for brands.">
+<meta name="twitter:image" content="https://nexoria.lomo.jp/aiportfolio/og-image.jpg">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#050505;font-family:'Inter','Noto Sans JP',sans-serif;color:#fafafa}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#050505}::-webkit-scrollbar-thumb{background:#3f3f46;border-radius:99px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+html{scroll-behavior:smooth}
+
+/* header */
+.hd{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px clamp(20px,5vw,48px);background:rgba(5,5,5,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid #1c1c1f}
+.hd-logo{display:flex;align-items:baseline;gap:10px}
+.hd-name{font-weight:700;font-size:16px;letter-spacing:.14em}
+.hd-sub{font-size:11px;color:#71717a;letter-spacing:.08em}
+.hd-nav{display:flex;align-items:center;gap:clamp(14px,3vw,28px);font-size:13px;color:#a1a1aa}
+.hd-nav a{color:#a1a1aa}.hd-nav a:hover,.hd-nav a.active{color:#fff}
+.btn-hire{background:#fff;color:#000 !important;padding:9px 20px;border-radius:99px;font-weight:600;font-size:12.5px}
+.btn-hire:hover{background:#e4e4e7}
+@media(max-width:768px){.hd-nav .nav-link{display:none}.hd-nav .nav-cross{display:inline;white-space:nowrap}.hd-sub{display:none}.btn-hire{white-space:nowrap;padding:9px 16px}}
+
+/* hero */
+.hero{position:relative;height:clamp(460px,72vh,640px);overflow:hidden}
+.hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.55)}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,5,.25) 0%,rgba(5,5,5,0) 40%,rgba(5,5,5,.92) 100%)}
+.hero-body{position:absolute;left:clamp(20px,5vw,48px);right:20px;bottom:clamp(36px,6vh,64px);max-width:760px;animation:fadeUp 1.2s cubic-bezier(.16,1,.3,1) .2s both}
+.hero-kicker{margin:0 0 14px;font-size:11.5px;letter-spacing:.22em;color:#d4d4d8;font-weight:600}
+.hero h1{margin:0 0 18px;font-size:clamp(30px,5.5vw,56px);line-height:1.12;font-weight:700;letter-spacing:-.02em}
+.hero-lead{margin:0 0 28px;font-size:clamp(13px,1.6vw,15px);line-height:1.85;color:#d4d4d8}
+.hero-lead .en{color:#a1a1aa;font-size:13px}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap}
+.btn-primary{background:#fff;color:#000;padding:14px 32px;border-radius:99px;font-weight:600;font-size:14px;transition:transform .2s}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-ghost{border:1px solid #52525b;color:#fafafa;padding:14px 32px;border-radius:99px;font-weight:600;font-size:14px;background:rgba(255,255,255,.05);transition:background .2s}
+.btn-ghost:hover{background:rgba(255,255,255,.12)}
+
+/* selected */
+.sel{padding:clamp(48px,8vw,80px) clamp(20px,5vw,48px) 28px}
+.sel-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:8px}
+.sel-head h2{margin:0;font-size:clamp(24px,3.5vw,32px);font-weight:700;letter-spacing:-.01em}
+.sel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.sel-tile{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1px solid #1c1c1f;cursor:pointer;transition:border-color .2s}
+.sel-tile:hover{border-color:#52525b}
+.sel-tile.main{grid-column:1/-1;aspect-ratio:21/9}
+.sel-tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sel-grad{position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.85))}
+.sel-cap{position:absolute;left:20px;right:20px;bottom:16px}
+.sel-tile.main .sel-cap{left:24px;right:24px;bottom:22px}
+.sel-tags{display:flex;gap:8px;margin-bottom:10px}
+.sel-tag{font-size:10.5px;font-weight:600;letter-spacing:.06em;background:rgba(255,255,255,.14);padding:4px 10px;border-radius:99px;backdrop-filter:blur(6px)}
+.sel-title{margin:0 0 3px;font-size:16px;font-weight:700}
+.sel-tile.main .sel-title{margin:0 0 4px;font-size:22px}
+.sel-meta{margin:0;font-size:11.5px;color:#a1a1aa}
+.sel-tile.main .sel-meta{font-size:12.5px}
+@media(max-width:768px){.sel-grid{grid-template-columns:1fr;gap:14px}.sel-tile,.sel-tile.main{aspect-ratio:16/10}}
+
+/* vfx */
+.vfx{padding:clamp(40px,6vw,64px) clamp(20px,5vw,48px) 0}
+.vfx-head{margin-bottom:8px}
+.vfx-head h2{margin:0 0 10px;font-size:22px}
+.vfx-lead{margin:0 0 24px;font-size:13.5px;line-height:1.9;color:#a1a1aa;max-width:760px}
+/* grid の auto-fit は列数を最大幅で数えるため2枚並ばない。
+   flex なら「1枚のときは620pxで頭打ち・2枚以上なら横に並ぶ」が素直に書ける */
+.vfx-grid{display:flex;flex-wrap:wrap;gap:18px}
+.vfx-item{flex:1 1 420px;max-width:620px;border:1px solid #1c1c1f;border-radius:14px;overflow:hidden;background:#0b0b0d;transition:border-color .2s}
+.vfx-item:hover{border-color:#52525b}
+.vfx-thumb{position:relative;aspect-ratio:16/9;cursor:pointer;background:#000}
+.vfx-thumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.vfx-body{padding:14px 18px 16px}
+.vfx-title{margin:0 0 4px;font-size:15px;font-weight:600}
+.vfx-desc{margin:0;font-size:12px;color:#71717a;line-height:1.7}
+.vfx-tag{display:inline-block;margin-bottom:9px;font-size:10px;font-weight:700;letter-spacing:.12em;color:#71717a;border:1px solid #27272a;border-radius:99px;padding:3px 10px}
+
+/* credits strip */
+.creds{padding:clamp(28px,4vw,40px) clamp(20px,5vw,48px) 0}
+.creds h2{margin:0 0 18px;font-size:22px}
+.creds-list{display:flex;gap:12px;flex-wrap:wrap}
+.cred{display:flex;align-items:center;gap:12px;border:1px solid #27272a;border-radius:12px;padding:13px 20px;font-size:12.5px;color:#d4d4d8;transition:border-color .2s,background .2s}
+.cred:hover{border-color:#52525b;background:rgba(255,255,255,.05)}
+.cred-label{font-size:9.5px;font-weight:700;letter-spacing:.14em;color:#71717a;white-space:nowrap}
+.cred svg{width:16px;height:16px;fill:currentColor;flex-shrink:0;display:block}
+
+/* serif display type */
+.hd-name,
+.sel-head h2,
+.works-head h2,
+.creds h2,
+.vfx-head h2,
+.about h2,
+.contact h2,
+.sel-title,
+.card-title,
+.lb-title{font-family:'Noto Serif JP',serif;font-weight:600}
+.hd-name{letter-spacing:.16em}
+.works-head h2,.creds h2,.vfx-head h2,.about h2,.contact h2{letter-spacing:.04em}
+.sel-title,.card-title{letter-spacing:.01em}
+
+/* about */
+.about{padding:clamp(36px,6vw,56px) clamp(20px,5vw,48px);border-top:1px solid #1c1c1f}
+.about h2{margin:0 0 18px;font-size:22px}
+.about p{margin:0 0 10px;font-size:13.5px;line-height:1.9;color:#a1a1aa;max-width:760px}
+.about p strong{color:#fafafa;font-weight:600}
+
+/* works */
+.works{padding:clamp(40px,6vw,64px) clamp(20px,5vw,48px) 72px}
+.works-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px}
+.works-head h2{margin:0;font-size:22px;font-weight:700}
+.works-count{color:#71717a;font-weight:500;font-size:14px}
+.chips{display:flex;gap:8px;font-size:12px;flex-wrap:wrap}
+.chip{padding:7px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;background:transparent;color:#a1a1aa;border:1px solid #27272a}
+.chip.active{background:#fff;color:#000;border-color:#fff;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:1024px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+.more-wrap{display:flex;justify-content:center;margin-top:32px}
+.btn-more{border:1px solid #52525b;color:#fafafa;background:rgba(255,255,255,.05);padding:13px 40px;border-radius:99px;font-weight:600;font-size:13.5px;font-family:inherit;cursor:pointer;transition:background .2s}
+.btn-more:hover{background:rgba(255,255,255,.12)}
+.card{cursor:pointer;transition:transform .2s}
+.card:hover{transform:translateY(-3px)}
+.card-thumb{position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;border:1px solid #1c1c1f;background:#111}
+.card-thumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.card-grad{position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.7))}
+.badge{position:absolute;font-size:10px;font-weight:600;background:rgba(0,0,0,.55);padding:4px 10px;border-radius:99px;backdrop-filter:blur(4px)}
+.badge.cat{left:12px;top:10px;letter-spacing:.08em}
+.badge.tool{right:12px;top:10px;color:#d4d4d8}
+.badge.dur{right:12px;bottom:10px;font-size:10.5px;color:#d4d4d8;padding:3px 8px;border-radius:6px}
+.card-body{padding:12px 4px 0}
+.card-title{margin:0 0 3px;font-size:14px;font-weight:600}
+.card-desc{margin:0;font-size:11.5px;color:#71717a;line-height:1.6}
+
+/* contact */
+.contact{border-top:1px solid #1c1c1f;padding:clamp(48px,8vw,72px) clamp(20px,5vw,48px);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px}
+.contact h2{margin:0 0 10px;font-size:clamp(22px,3.5vw,30px);font-weight:700}
+.contact p{margin:0;font-size:13.5px;color:#a1a1aa}
+.contact-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-x{border:1px solid #52525b;padding:15px 24px;border-radius:99px;font-weight:600;font-size:14px;color:#fafafa;transition:background .2s}
+.btn-x:hover{background:rgba(255,255,255,.08)}
+.btn-msg{background:#fff;color:#000;padding:15px 34px;border-radius:99px;font-weight:600;font-size:14px;transition:transform .2s}
+.btn-msg:hover{transform:translateY(-2px)}
+
+/* footer */
+.ft{padding:20px clamp(20px,5vw,48px);border-top:1px solid #141416;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:11.5px;color:#71717a}
+.ft a{color:#71717a}.ft a:hover{color:#fafafa}
+.ft-links{display:flex;gap:20px;align-items:center}
+.ft-links a{display:inline-flex;align-items:center}
+.ft-links svg{width:19px;height:19px;fill:currentColor;display:block;transition:opacity .2s}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;cursor:pointer}
+.lb.open{display:flex}
+.lb-inner{max-width:min(1080px,92vw);max-height:78vh;cursor:default}
+.lb-inner video{max-width:100%;max-height:78vh;width:auto;height:auto;margin:0 auto;border-radius:12px;background:#000;box-shadow:0 24px 80px rgba(0,0,0,.6);display:block}
+.lb-cap{text-align:center}
+.lb-title{margin:0 0 4px;font-size:17px;font-weight:700}
+.lb-meta{margin:0;font-size:12.5px;color:#a1a1aa}
+.lb-close{position:fixed;top:22px;right:32px;font-size:30px;color:#a1a1aa;background:none;border:none;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+
+<header class="hd">
+  <a href="#top" class="hd-logo">
+    <span class="hd-name">SNOW LABS</span>
+    <span class="hd-sub">AI FILM STUDIO</span>
+  </a>
+  <nav class="hd-nav">
+    <a href="#selected" class="nav-link active">Video Works</a>
+    <a href="gallery.html" class="nav-link nav-cross">Image Works</a>
+    <a href="#about" class="nav-link">About</a>
+    <a href="https://forms.gle/zLvEbzqVWQuzJLhJ7" target="_blank" rel="noopener" class="btn-hire">依頼する / Hire me</a>
+  </nav>
+</header>
+
+<section class="hero" id="top">
+  <video poster="posters/work-32-top.jpg" src="videos/work-32-top.mp4" autoplay muted defaultMuted loop playsinline webkit-playsinline preload="auto"></video>
+  <div class="hero-grad"></div>
+  <div class="hero-body">
+    <p class="hero-kicker">FOR BRANDS &amp; CREATORS</p>
+    <h1>商品広告、ショート動画。</h1>
+    <p class="hero-lead">企画から完成まで、AIで速く。<br>15秒の広告を、数日で形にします。</p>
+    <div class="hero-ctas">
+      <a href="https://forms.gle/zLvEbzqVWQuzJLhJ7" target="_blank" rel="noopener" class="btn-primary">制作の相談をする →</a>
+    </div>
+  </div>
+</section>
+
+<section class="sel" id="selected">
+  <div class="sel-grid">
+    <div class="sel-tile main">
+      <video poster="posters/work-41.jpg" src="videos/work-41.mp4" autoplay muted loop playsinline></video>
+      <div class="sel-grad"></div>
+      <div class="sel-cap">
+        <div class="sel-tags"><span class="sel-tag">架空CM</span></div>
+        <p class="sel-title">FREEZE</p>
+        <p class="sel-meta">スクランブル交差点の時間が止まる · <span class="sel-dur">--:--</span></p>
+      </div>
+    </div>
+    <div class="sel-tile">
+      <video poster="posters/work-24.jpg" src="videos/work-24.mp4" muted loop playsinline preload="none"></video>
+      <div class="sel-grad"></div>
+      <div class="sel-cap">
+        <div class="sel-tags"><span class="sel-tag">架空CM</span></div>
+        <p class="sel-title">Just Create</p>
+        <p class="sel-meta">Don't wait for inspiration · <span class="sel-dur">--:--</span></p>
+      </div>
+    </div>
+    <div class="sel-tile">
+      <video poster="posters/work-20.jpg" src="videos/work-20.mp4" muted loop playsinline preload="none"></video>
+      <div class="sel-grad"></div>
+      <div class="sel-cap">
+        <p class="sel-title">視線の先に</p>
+        <p class="sel-meta">くりえみAIフィルムコンテスト応募作品 · <span class="sel-dur">--:--</span></p>
+      </div>
+    </div>
+    <div class="sel-tile">
+      <video poster="posters/work-22-top.jpg" src="videos/work-22-top.mp4" muted loop playsinline preload="none"></video>
+      <div class="sel-grad"></div>
+      <div class="sel-cap">
+        <div class="sel-tags"><span class="sel-tag">架空CM</span></div>
+        <p class="sel-title">KIOKKU</p>
+        <p class="sel-meta">今を、未来の記憶として撮る次世代メモリーカメラ · <span class="sel-dur">--:--</span></p>
+      </div>
+    </div>
+    <div class="sel-tile">
+      <video poster="posters/work-43.jpg" src="videos/work-43.mp4" muted loop playsinline preload="none"></video>
+      <div class="sel-grad"></div>
+      <div class="sel-cap">
+        <p class="sel-title">3人の世界が交わる瞬間</p>
+        <p class="sel-meta">3人のキャラクターの世界観を表現 · <span class="sel-dur">--:--</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="vfx" id="vfx">
+  <div class="vfx-head">
+    <h2>VFX / 映像加工</h2>
+    <p class="vfx-lead">撮影済みの素材をAIで加工します。観客の追加、ライティング・天候の変更など、実写を活かしたまま画づくりを変える処理に対応。</p>
+  </div>
+  <div class="vfx-grid">
+    <div class="vfx-item">
+      <div class="vfx-thumb">
+        <video poster="posters/vfx-01.jpg" src="videos/vfx-01.mp4" muted loop playsinline preload="none"></video>
+      </div>
+      <div class="vfx-body">
+        <span class="vfx-tag">CROWD</span>
+        <p class="vfx-title">観客を増やす</p>
+        <p class="vfx-desc">実写のスタジアム映像に観客を追加。元素材の構図・カメラワークはそのまま維持しています。</p>
+      </div>
+    </div>
+    <div class="vfx-item">
+      <div class="vfx-thumb">
+        <video poster="posters/vfx-02.jpg" src="videos/vfx-02.mp4" muted loop playsinline preload="none"></video>
+      </div>
+      <div class="vfx-body">
+        <span class="vfx-tag">WEATHER</span>
+        <p class="vfx-title">天候をかえる</p>
+        <p class="vfx-desc">曇天の街並みを快晴に変更。空の抜けと光の状態を作り変えています。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="creds">
+  <h2>SELECTED PRESS</h2>
+  <div class="creds-list">
+  <a class="cred" href="https://www.youtube.com/watch?v=hY3qp2EvDmk" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    <span class="cred-label">TV</span>
+    <span>テレビ朝日「AI大作戦」放送作品を見る →</span>
+  </a>
+  <a class="cred" href="https://ai-creators.tech/news/highlights/the-ai-mission/" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.26L21.6 9.2l-4.8 4.68 1.13 6.62L12 17.27 6.07 20.5l1.13-6.62L2.4 9.2l6.7-.94z"/></svg>
+    <span class="cred-label">CREATORS</span>
+    <span>AI Creators 公式ハイライト掲載 →</span>
+  </a>
+  <a class="cred" href="https://open.spotify.com/intl-ja/artist/4Ds6NolAi1hMfTA5KSnKSG" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+    <span class="cred-label">MUSIC</span>
+    <span>SUNOで生成した楽曲をSpotifyで配信中 →</span>
+  </a>
+  <a class="cred" href="https://x.com/HappyOysterAI/status/2088195619039178987" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.26L21.6 9.2l-4.8 4.68 1.13 6.62L12 17.27 6.07 20.5l1.13-6.62L2.4 9.2l6.7-.94z"/></svg>
+    <span class="cred-label">AWARD</span>
+    <span>The OyStar Awards Top 10 Winnerに選出 →</span>
+  </a>
+  <a class="cred" href="https://snowlabs-games.itch.io/lost-chord" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12a4 4 0 0 1 4 4v3a3 3 0 0 1-5.4 1.8L15 15H9l-1.6 1.8A3 3 0 0 1 2 15v-3a4 4 0 0 1 4-4zm1 2.5v1.5H5.5v1.5H7V15h1.5v-1.5H10V12H8.5v-1.5zm9 .5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm2 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+    <span class="cred-label">GAME</span>
+    <span>ブラウザゲーム『LOST CHORD』をitch.ioで公開 →</span>
+  </a>
+  </div>
+</section>
+
+<section class="about" id="about">
+  <h2>ABOUT</h2>
+  <p>AIで<strong>商品広告・ショート動画</strong>を制作しています。</p>
+  <p>実写ではコストのかかる表現も、AIなら短いサイクルで複数パターン試せます。SNSの縦型からCMサイズまで対応。</p>
+</section>
+
+<section class="contact" id="contact">
+  <div>
+    <h2>制作のご相談、まずは一言から。</h2>
+    <p>Commissions &amp; collaborations</p>
+    <!-- 2026-10-13 非表示（けんじさん指定）: <p>Commissions &amp; collaborations — X のDMでもOK。</p> -->
+  </div>
+  <div class="contact-btns">
+    <a href="https://forms.gle/zLvEbzqVWQuzJLhJ7" target="_blank" rel="noopener" class="btn-msg">メッセージを送る</a>
+    <!-- 2026-10-13 非表示（けんじさん指定）: <a href="https://x.com/nmkenji" target="_blank" rel="noopener" class="btn-x">X DM</a> -->
+  </div>
+</section>
+
+<footer class="ft">
+  <span>© 2026 SNOW LABS</span>
+  <div class="ft-links">
+    <a href="https://www.youtube.com/@SnowLabs" target="_blank" rel="noopener" aria-label="YouTube">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    </a>
+    <!-- 2026-10-13 非表示（けんじさん指定）
+    <a href="https://x.com/nmkenji" target="_blank" rel="noopener" aria-label="X (Twitter)">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+    -->
+    <a href="https://www.instagram.com/kenji0031/" target="_blank" rel="noopener" aria-label="Instagram">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+    </a>
+  </div>
+</footer>
+
+<div class="lb" id="lightbox">
+  <div class="lb-inner"><video id="lbVideo" controls muted playsinline></video></div>
+  <div class="lb-cap">
+    <p class="lb-title" id="lbTitle"></p>
+    <p class="lb-meta" id="lbMeta"></p>
+  </div>
+  <button class="lb-close" aria-label="閉じる">×</button>
+</div>
+
+<script>
+/* モバイルの自動再生ブロック対策: 失敗したら最初の操作で再試行 */
+(function () {
+  const hv = document.querySelector('.hero video');
+  if (!hv) return;
+  hv.muted = true;
+  const tryPlay = () => { const p = hv.play(); if (p) p.catch(() => {}); };
+  tryPlay();
+  hv.addEventListener('loadeddata', tryPlay, { once: true });
+  ['touchstart', 'pointerdown', 'scroll'].forEach(ev =>
+    document.addEventListener(ev, tryPlay, { once: true, passive: true })
+  );
+})();
+
+const lb = document.getElementById('lightbox');
+const lbVideo = document.getElementById('lbVideo');
+function openLightbox({ srcUrl, title, meta }) {
+  lbVideo.src = srcUrl;
+  lbVideo.muted = true;
+  document.getElementById('lbTitle').textContent = title;
+  document.getElementById('lbMeta').textContent = meta;
+  lb.classList.add('open');
+  lbVideo.play().catch(() => {});
+}
+function closeLightbox() {
+  lb.classList.remove('open');
+  lbVideo.pause();
+  lbVideo.removeAttribute('src');
+  lbVideo.load();
+}
+lb.addEventListener('click', (e) => { if (!e.target.closest('.lb-inner')) closeLightbox(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+function fmtDur(sec) {
+  sec = Math.floor(sec);
+  return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+}
+document.querySelectorAll('.vfx-item').forEach(item => {
+  const v = item.querySelector('video');
+  const thumb = item.querySelector('.vfx-thumb');
+  if (!v || !thumb) return;
+  thumb.onmouseenter = () => { v.play().catch(() => {}); };
+  thumb.onmouseleave = () => { v.pause(); v.currentTime = 0; };
+  thumb.onclick = () => openLightbox({
+    srcUrl: v.getAttribute('src'),
+    title: item.querySelector('.vfx-title').textContent,
+    meta: item.querySelector('.vfx-desc').textContent
+  });
+});
+
+document.querySelectorAll('.sel-tile').forEach(t => {
+  const v = t.querySelector('video');
+  const durEl = t.querySelector('.sel-dur');
+  if (v && durEl) {
+    const setDur = () => { durEl.textContent = fmtDur(v.duration); };
+    if (v.readyState >= 1) setDur(); else v.addEventListener('loadedmetadata', setDur);
+  }
+  if (v && !v.hasAttribute('autoplay')) {
+    t.onmouseenter = () => v.play().catch(() => {});
+    t.onmouseleave = () => { v.pause(); v.currentTime = 0; };
+  }
+  t.onclick = () => {
+    const srcUrl = v.getAttribute('src');
+    const title = t.querySelector('.sel-title').textContent;
+    const meta = t.querySelector('.sel-meta').textContent;
+    openLightbox({ srcUrl, title, meta });
+  };
+});
+</script>
+</body>
+</html>
