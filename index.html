@@ -3,127 +3,921 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexoria</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/responsive-header.css">
+    <title>Nexoria | Web Designer Portfolio</title>
+    <meta name="description" content="NexoriaのWebデザイン・LP制作ポートフォリオ。Web制作、LP、EC運用、アクセシビリティ、AI/メタバース領域の制作実績を掲載。">
+    <style>
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --paper: #ffffff;
+            --soft: #f8fafc;
+            --mist: #eef6f7;
+            --accent: #0f766e;
+            --accent-strong: #115e59;
+            --gold: #b8904a;
+            --shadow: 0 22px 60px rgba(15, 23, 42, 0.10);
+            --shadow-soft: 0 12px 36px rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.09), transparent 34rem),
+                linear-gradient(180deg, #ffffff 0%, #f8fafc 46%, #ffffff 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+            line-height: 1.75;
+            letter-spacing: 0;
+        }
+
+        img,
+        video {
+            max-width: 100%;
+            display: block;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 18px clamp(20px, 5vw, 64px);
+            background: rgba(255, 255, 255, 0.78);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+            backdrop-filter: blur(18px);
+        }
+
+        .brand {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.35rem;
+            color: var(--ink);
+            letter-spacing: 0.02em;
+        }
+
+        .site-nav {
+            display: flex;
+            align-items: center;
+            gap: clamp(14px, 3vw, 34px);
+            color: #334155;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .site-nav a {
+            position: relative;
+            padding: 6px 0;
+        }
+
+        .site-nav a::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 1px;
+            background: var(--gold);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.25s ease;
+        }
+
+        .site-nav a:hover::after,
+        .site-nav a.is-active::after {
+            transform: scaleX(1);
+        }
+
+        .hero {
+            position: relative;
+            min-height: 100svh;
+            display: grid;
+            align-items: end;
+            overflow: hidden;
+            color: #ffffff;
+            background: #0f172a;
+        }
+
+        .hero-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.78;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(2, 6, 23, 0.82) 0%, rgba(15, 23, 42, 0.54) 42%, rgba(15, 23, 42, 0.14) 100%),
+                linear-gradient(180deg, rgba(2, 6, 23, 0.08) 0%, rgba(2, 6, 23, 0.86) 100%);
+        }
+
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+            width: min(1160px, calc(100% - 40px));
+            margin: 0 auto;
+            padding: 150px 0 92px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 22px;
+            color: rgba(255, 255, 255, 0.82);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 42px;
+            height: 1px;
+            background: var(--gold);
+        }
+
+        .hero h1 {
+            max-width: 880px;
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(3.7rem, 12vw, 9.2rem);
+            line-height: 0.9;
+            font-weight: 500;
+        }
+
+        .hero-copy {
+            max-width: 690px;
+            margin: 28px 0 0;
+            color: rgba(255, 255, 255, 0.86);
+            font-size: clamp(1rem, 2vw, 1.22rem);
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 34px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+            padding: 12px 22px;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button-primary {
+            background: #ffffff;
+            color: var(--ink);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+        }
+
+        .button-secondary {
+            border-color: rgba(255, 255, 255, 0.44);
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .hero-meta {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1px;
+            width: min(760px, 100%);
+            margin-top: 66px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(12px);
+        }
+
+        .hero-meta div {
+            padding: 18px;
+            background: rgba(15, 23, 42, 0.24);
+        }
+
+        .hero-meta strong {
+            display: block;
+            font-size: 1.35rem;
+            line-height: 1.2;
+        }
+
+        .hero-meta span {
+            display: block;
+            margin-top: 4px;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.8rem;
+        }
+
+        .section {
+            width: min(1160px, calc(100% - 40px));
+            margin: 0 auto;
+            padding: clamp(84px, 10vw, 132px) 0;
+        }
+
+        .section + .section {
+            border-top: 1px solid var(--line);
+        }
+
+        .section-kicker {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            max-width: 800px;
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2.35rem, 6vw, 4.9rem);
+            line-height: 1.02;
+            font-weight: 500;
+        }
+
+        .section-lead {
+            max-width: 760px;
+            margin: 22px 0 0;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .intro-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+            gap: clamp(32px, 6vw, 76px);
+            align-items: start;
+        }
+
+        .intro-panel {
+            position: sticky;
+            top: 110px;
+            padding: 28px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.82);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .intro-panel p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .capability-list {
+            display: grid;
+            gap: 16px;
+            margin-top: 26px;
+        }
+
+        .capability {
+            display: grid;
+            grid-template-columns: 40px 1fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .capability span {
+            display: grid;
+            place-items: center;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(15, 118, 110, 0.2);
+            border-radius: 999px;
+            color: var(--accent);
+            font-weight: 800;
+            background: var(--mist);
+        }
+
+        .capability h3 {
+            margin: 0 0 4px;
+            font-size: 1.03rem;
+        }
+
+        .capability p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.94rem;
+        }
+
+        .works-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 34px 0 30px;
+        }
+
+        .filter-btn {
+            appearance: none;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 9px 16px;
+            color: #334155;
+            background: #ffffff;
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            border-color: rgba(15, 118, 110, 0.28);
+            color: var(--accent-strong);
+            background: #ecfdf5;
+            transform: translateY(-1px);
+        }
+
+        .works-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .project-card {
+            overflow: hidden;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 8px;
+            background: var(--paper);
+            box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+            opacity: 1;
+            transform: translateY(0);
+            transition: transform 0.28s ease, box-shadow 0.28s ease, opacity 0.24s ease;
+        }
+
+        .project-card.is-hidden {
+            display: none;
+        }
+
+        .project-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow);
+        }
+
+        .project-image {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: var(--soft);
+        }
+
+        .project-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.42s ease;
+        }
+
+        .project-card:hover img {
+            transform: scale(1.035);
+        }
+
+        .project-tag {
+            position: absolute;
+            left: 14px;
+            bottom: 14px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            color: #ffffff;
+            background: rgba(15, 23, 42, 0.72);
+            font-size: 0.74rem;
+            font-weight: 800;
+            backdrop-filter: blur(8px);
+        }
+
+        .project-info {
+            padding: 20px;
+        }
+
+        .project-info h3 {
+            margin: 0 0 10px;
+            font-size: 1.08rem;
+            line-height: 1.4;
+        }
+
+        .project-info p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .about-layout {
+            display: grid;
+            grid-template-columns: 0.86fr 1.14fr;
+            gap: clamp(34px, 6vw, 76px);
+            align-items: start;
+        }
+
+        .profile-card {
+            padding: 30px;
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .profile-card h3 {
+            margin: 0 0 12px;
+            font-size: 1.18rem;
+        }
+
+        .profile-card p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .skills-grid,
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 28px;
+        }
+
+        .skill-card,
+        .value-card {
+            padding: 22px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.76);
+        }
+
+        .skill-card h3,
+        .value-card h3 {
+            margin: 0 0 12px;
+            color: var(--ink);
+            font-size: 1rem;
+        }
+
+        .skill-card ul {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .skill-card li,
+        .interest-tag {
+            display: inline-flex;
+            align-items: center;
+            min-height: 30px;
+            padding: 5px 10px;
+            border: 1px solid rgba(15, 118, 110, 0.16);
+            border-radius: 999px;
+            color: var(--accent-strong);
+            background: #f0fdfa;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .value-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.94rem;
+        }
+
+        .interests-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .contact-band {
+            width: min(1160px, calc(100% - 40px));
+            margin: 0 auto clamp(42px, 7vw, 76px);
+            padding: clamp(34px, 6vw, 58px);
+            border-radius: 8px;
+            color: #ffffff;
+            background:
+                linear-gradient(135deg, rgba(15, 23, 42, 0.97), rgba(17, 94, 89, 0.95)),
+                #0f172a;
+            box-shadow: var(--shadow);
+        }
+
+        .contact-band h2 {
+            max-width: 760px;
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2rem, 5vw, 4rem);
+            line-height: 1.06;
+            font-weight: 500;
+        }
+
+        .contact-band p {
+            max-width: 760px;
+            margin: 18px 0 0;
+            color: rgba(255, 255, 255, 0.76);
+        }
+
+        .contact-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .site-footer {
+            padding: 26px 20px 42px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.86rem;
+        }
+
+        @media (max-width: 920px) {
+            .intro-grid,
+            .about-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .intro-panel {
+                position: static;
+            }
+
+            .works-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 680px) {
+            .site-header {
+                align-items: flex-start;
+                padding: 14px 20px;
+            }
+
+            .site-nav {
+                justify-content: flex-end;
+                flex-wrap: wrap;
+                gap: 8px 16px;
+                font-size: 0.82rem;
+            }
+
+            .hero-inner {
+                width: min(100% - 32px, 1160px);
+                padding-bottom: 58px;
+            }
+
+            .hero-meta,
+            .works-grid,
+            .skills-grid,
+            .values-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-actions,
+            .contact-links {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .section,
+            .contact-band {
+                width: min(100% - 32px, 1160px);
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- ヘッダーコンテナ -->
-    <div id="header-container"></div>
+    <header class="site-header">
+        <a href="#top" class="brand" aria-label="Nexoria top">Nexoria</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+            <a href="#works">Works</a>
+            <a href="#about">About</a>
+            <a href="#skills">Skills</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
 
-    <video id="video-background" autoplay muted playsinline>
-        <source src="assets/media/mv_01.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <main id="top">
+        <section class="hero" aria-label="Nexoria portfolio hero">
+            <video class="hero-video" id="hero-video" autoplay muted playsinline>
+                <source src="aiportfolio/videos/work-22-top.mp4" type="video/mp4">
+            </video>
+            <div class="hero-inner">
+                <p class="eyebrow">Web Design / LP / Digital Experience</p>
+                <h1>Kenji Nomura</h1>
+                <p class="hero-copy">人との信頼関係を大切にしながら、新しい技術や仕組みをわかりやすく届けることを得意としています。常に改善を重ね、相手にとってより良い体験をつくることを心がけています。</p>
+                <div class="hero-actions">
+                    <a class="button button-primary" href="#works">実績を見る</a>
+                    <a class="button button-secondary" href="#about">プロフィール</a>
+                </div>
+                <div class="hero-meta" aria-label="Portfolio highlights">
+                    <div>
+                        <strong>10+ yrs</strong>
+                        <span>Web制作・運用経験</span>
+                    </div>
+                    <div>
+                        <strong>LP / EC</strong>
+                        <span>CV導線と更新性を重視</span>
+                    </div>
+                    <div>
+                        <strong>AI / Web3</strong>
+                        <span>新領域の表現にも対応</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <div class="overlay"></div>
+        <section class="section" id="intro">
+            <div class="intro-grid">
+                <div>
+                    <p class="section-kicker">Positioning</p>
+                    <h2 class="section-title">信頼される入口をつくる。</h2>
+                </div>
+                <div class="intro-panel">
+                    <p>情報を詰め込むだけではなく、余白、読み順、視線誘導、更新のしやすさまで含めて設計します。先端医療クリニックのように、安心感と期待値の両方が求められるサービスに適したトーンを意識しています。</p>
+                    <div class="capability-list">
+                        <div class="capability">
+                            <span>01</span>
+                            <div>
+                                <h3>LP制作</h3>
+                                <p>訴求整理からファーストビュー、CTA、セクション構成まで一貫して設計。</p>
+                            </div>
+                        </div>
+                        <div class="capability">
+                            <span>02</span>
+                            <div>
+                                <h3>Web運用</h3>
+                                <p>既存サイトの更新、改善、アクセシビリティ確認、表示品質の調整に対応。</p>
+                            </div>
+                        </div>
+                        <div class="capability">
+                            <span>03</span>
+                            <div>
+                                <h3>新しい表現</h3>
+                                <p>AIアート、アバター、メタバース領域の経験を活かしたビジュアル提案。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <div class="content">
-        <h1>Nexoria</h1>
-        <div class="button-container">
-            <a href="about.html" class="btn btn-primary">About</a>
-            <a href="#" class="btn btn-secondary">My Works</a>
-        </div>
-    </div>
+        <section class="section" id="works">
+            <p class="section-kicker">Selected Works</p>
+            <h2 class="section-title">制作・運用実績</h2>
+            <p class="section-lead">コーポレートサイト、LP、EC運用、アクセシビリティ調査、プロトタイプデザインなど、目的に応じて情報設計と見せ方を整えてきました。</p>
 
-    <div class="video-nav">
-        <div class="video-title" id="video-title">love is</div>
-        <div class="progress-container" id="progress-container"></div>
-    </div>
+            <div class="works-toolbar" aria-label="Works filter">
+                <button class="filter-btn active" type="button" data-filter="all">All</button>
+                <button class="filter-btn" type="button" data-filter="web-design">Web Design</button>
+                <button class="filter-btn" type="button" data-filter="corporate">Corporate</button>
+                <button class="filter-btn" type="button" data-filter="landing-page">Landing Page</button>
+                <button class="filter-btn" type="button" data-filter="e-commerce">E-Commerce</button>
+            </div>
 
-    <script src="assets/js/header-common.js"></script>
+            <div class="works-grid">
+                <article class="project-card" data-category="web-design corporate">
+                    <div class="project-image">
+                        <img src="assets/img/projects/livemax_760x426.png" alt="コーポレートサイト運用・管理の制作画面">
+                        <span class="project-tag">Corporate / Web Design</span>
+                    </div>
+                    <div class="project-info">
+                        <h3>コーポレートサイト運用・管理</h3>
+                        <p>既存サイトの情報更新、ページ改善、安定した運用のための制作サポート。</p>
+                    </div>
+                </article>
+
+                <article class="project-card" data-category="landing-page">
+                    <div class="project-image">
+                        <img src="assets/img/projects/maxcoffee_760x426.png" alt="ランディングページ制作のビジュアル">
+                        <span class="project-tag">Landing Page</span>
+                    </div>
+                    <div class="project-info">
+                        <h3>ランディングページ制作</h3>
+                        <p>商品の印象を短時間で伝え、行動へつなげるための構成とビジュアル設計。</p>
+                    </div>
+                </article>
+
+                <article class="project-card" data-category="e-commerce">
+                    <div class="project-image">
+                        <img src="assets/img/projects/roselabo_760x426.png" alt="ECサイト管理更新の制作画面">
+                        <span class="project-tag">E-Commerce</span>
+                    </div>
+                    <div class="project-info">
+                        <h3>ECサイト管理更新</h3>
+                        <p>商品やブランドの世界観を保ちながら、継続的な更新と改善を実施。</p>
+                    </div>
+                </article>
+
+                <article class="project-card" data-category="web-design">
+                    <div class="project-image">
+                        <img src="assets/img/projects/jma_760x426.png" alt="アクセシビリティチェックの調査画面">
+                        <span class="project-tag">Web Design</span>
+                    </div>
+                    <div class="project-info">
+                        <h3>アクセシビリティチェック</h3>
+                        <p>Webサイトの見やすさ、使いやすさ、利用しやすさを調査し改善点を整理。</p>
+                    </div>
+                </article>
+
+                <article class="project-card" data-category="corporate web-design">
+                    <div class="project-image">
+                        <img src="assets/img/projects/avater_760x426.png" alt="AIチャットプロトタイプデザインの画面">
+                        <span class="project-tag">Prototype</span>
+                    </div>
+                    <div class="project-info">
+                        <h3>AIチャットプロトタイプデザイン</h3>
+                        <p>アバターとレイアウトを含め、対話体験の印象を左右するUIを制作。</p>
+                    </div>
+                </article>
+
+                <article class="project-card" data-category="landing-page">
+                    <div class="project-image">
+                        <img src="assets/img/projects/mvmf_760x426.png" alt="メタバースイベント参加実績のビジュアル">
+                        <span class="project-tag">Event / Digital</span>
+                    </div>
+                    <div class="project-info">
+                        <h3>メタバースイベント</h3>
+                        <p>日本コミュニティとしてイベントに参加し、デジタル空間での表現を実践。</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="about">
+            <div class="about-layout">
+                <div>
+                    <p class="section-kicker">About</p>
+                    <h2 class="section-title">制作と運用の両方を見ながら、使いやすい体験へ整える。</h2>
+                    <p class="section-lead">10年以上のWeb制作経験を持ち、デジタルとリアルをつなぐ創造的な場づくりに情熱を注いでいます。Web3、メタバース、AI技術を活用した表現にも関心があり、デザイン・開発・コミュニティ運営の経験を横断して価値を生み出すことを目指しています。</p>
+                </div>
+                <div class="profile-card">
+                    <h3>仕事への姿勢</h3>
+                    <p>最終的にはユーザーの体験が最も重要です。技術的に優れているだけでなく、実際に使いやすく、必要な情報へ迷わず辿り着けるソリューションを作ることを大切にしています。</p>
+                    <div class="values-grid">
+                        <div class="value-card">
+                            <h3>継続的学習</h3>
+                            <p>新しい技術やツールを学び、制作の選択肢を増やし続けます。</p>
+                        </div>
+                        <div class="value-card">
+                            <h3>ユーザー中心設計</h3>
+                            <p>見た目だけでなく、理解しやすさと行動しやすさを重視します。</p>
+                        </div>
+                        <div class="value-card">
+                            <h3>協働</h3>
+                            <p>フィードバックを歓迎し、チームの視点を取り入れて品質を高めます。</p>
+                        </div>
+                        <div class="value-card">
+                            <h3>表現の探求</h3>
+                            <p>AIアートやメタバースなど、新しい表現領域にも柔軟に向き合います。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="skills">
+            <p class="section-kicker">Skills</p>
+            <h2 class="section-title">対応領域</h2>
+            <p class="section-lead">フロントエンド、デザイン、ノーコード、AIクリエイティブまで、制作現場で必要な粒度に合わせて手を動かします。</p>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <h3>フロントエンド</h3>
+                    <ul>
+                        <li>HTML/CSS</li>
+                        <li>レスポンシブデザイン</li>
+                        <li>アクセシビリティ</li>
+                    </ul>
+                </div>
+                <div class="skill-card">
+                    <h3>デザインとUX</h3>
+                    <ul>
+                        <li>Figma</li>
+                        <li>Photoshop</li>
+                        <li>Premiere Pro</li>
+                        <li>WordPress</li>
+                    </ul>
+                </div>
+                <div class="skill-card">
+                    <h3>ノーコード開発</h3>
+                    <ul>
+                        <li>Studio</li>
+                        <li>Wix</li>
+                        <li>LP改善</li>
+                    </ul>
+                </div>
+                <div class="skill-card">
+                    <h3>AI・クリエイティブ</h3>
+                    <ul>
+                        <li>AIアート</li>
+                        <li>動画生成AI</li>
+                        <li>AI活用プロダクト</li>
+                        <li>アバター表現</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="interests-list" aria-label="Interests">
+                <span class="interest-tag">Web3メタバース</span>
+                <span class="interest-tag">写真撮影</span>
+                <span class="interest-tag">AIアート</span>
+                <span class="interest-tag">動画制作</span>
+                <span class="interest-tag">動画生成AI</span>
+                <span class="interest-tag">コミュニティ運営</span>
+                <span class="interest-tag">イベント企画</span>
+            </div>
+        </section>
+
+        <section class="contact-band" id="contact">
+            <p>Codexにてデザイン制作</p>
+            <div class="contact-links">
+                <a class="button button-primary" href="#works">制作実績へ戻る</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <small>&copy; 2026 Nexoria. Portfolio for web design and landing page production.</small>
+    </footer>
+
     <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const video = document.getElementById('video-background');
-            const progressContainer = document.getElementById('progress-container');
-            const videoTitle = document.getElementById('video-title');
-            
+        document.addEventListener('DOMContentLoaded', () => {
             const videos = [
-                { url: 'assets/media/mv_01.mp4', title: 'love is' },
-                { url: 'assets/media/mv_02.mp4', title: 'sky dancer' },
-                { url: 'assets/media/mv_05.mp4', title: 'Beyond the Horizon' },
-                { url: 'assets/media/mv_04.mp4', title: 'mandala' }
+                'aiportfolio/videos/work-22-top.mp4',
+                'aiportfolio/videos/work-15.mp4',
+                'aiportfolio/videos/work-24.mp4',
             ];
+            const heroVideo = document.getElementById('hero-video');
             let currentVideoIndex = 0;
 
-            // プログレスバーの初期化
-            videos.forEach((_, index) => {
-                const progressBar = document.createElement('div');
-                progressBar.className = 'progress-bar';
-                progressBar.innerHTML = '<div class="progress-bar-fill"></div>';
-                // プログレスバーにクリックイベントを追加
-                progressBar.addEventListener('click', () => {
-                    changeVideoTo(index);
-                });
-                progressContainer.appendChild(progressBar);
-            });
-
-            function resizeVideo() {
-                const windowAspect = window.innerWidth / window.innerHeight;
-                const videoAspect = video.videoWidth / video.videoHeight;
-                
-                if (windowAspect > videoAspect) {
-                    video.style.width = '100%';
-                    video.style.height = 'auto';
-                } else {
-                    video.style.width = 'auto';
-                    video.style.height = '100%';
-                }
-            }
-
-            // 特定のインデックスの動画に切り替える関数
-            function changeVideoTo(index) {
-                // 前のプログレスバーのアクティブ状態を解除
-                progressContainer.children[currentVideoIndex].classList.remove('active');
-                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = '0%';
-
-                currentVideoIndex = index;
-                video.src = videos[currentVideoIndex].url;
-                videoTitle.textContent = videos[currentVideoIndex].title;
-                video.play();
-
-                // 新しいプログレスバーをアクティブに
-                progressContainer.children[currentVideoIndex].classList.add('active');
-                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = '0%';
-            }
-
-            // 次の動画に切り替える関数
-            function changeVideo() {
-                // 前のプログレスバーのアクティブ状態を解除
-                progressContainer.children[currentVideoIndex].classList.remove('active');
-                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = '0%';
-
+            heroVideo.addEventListener('ended', () => {
                 currentVideoIndex = (currentVideoIndex + 1) % videos.length;
-                video.src = videos[currentVideoIndex].url;
-                videoTitle.textContent = videos[currentVideoIndex].title;
-                video.play();
-
-                // 新しいプログレスバーをアクティブに
-                progressContainer.children[currentVideoIndex].classList.add('active');
-                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = '0%';
-            }
-
-            function updateProgressBar() {
-                const progress = (video.currentTime / video.duration) * 100;
-                progressContainer.children[currentVideoIndex].querySelector('.progress-bar-fill').style.width = `${progress}%`;
-            }
-
-            // 動画が終了したら次の動画に進む
-            video.addEventListener('ended', changeVideo);
-
-            // プログレスバーの更新
-            video.addEventListener('timeupdate', updateProgressBar);
-
-            window.addEventListener('resize', resizeVideo);
-            video.addEventListener('loadedmetadata', resizeVideo);
-
-            // 初期状態でのアクティブプログレスバーの設定
-            progressContainer.children[currentVideoIndex].classList.add('active');
-
-            // 動画のメタデータがロードされたときに進行バーをリセット
-            video.addEventListener('loadedmetadata', () => {
-                updateProgressBar();
+                heroVideo.src = videos[currentVideoIndex];
+                heroVideo.play();
             });
+
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const cards = document.querySelectorAll('.project-card');
+
+            filterButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const filter = button.dataset.filter;
+                    filterButtons.forEach((item) => item.classList.remove('active'));
+                    button.classList.add('active');
+
+                    cards.forEach((card) => {
+                        const categories = card.dataset.category;
+                        card.classList.toggle('is-hidden', filter !== 'all' && !categories.includes(filter));
+                    });
+                });
+            });
+
+            const navLinks = document.querySelectorAll('.site-nav a');
+            const sections = [...navLinks]
+                .map((link) => document.querySelector(link.getAttribute('href')))
+                .filter(Boolean);
+
+            const activateNav = () => {
+                const current = sections
+                    .filter((section) => section.getBoundingClientRect().top < 160)
+                    .pop();
+
+                navLinks.forEach((link) => {
+                    link.classList.toggle('is-active', current && link.getAttribute('href') === `#${current.id}`);
+                });
+            };
+
+            activateNav();
+            window.addEventListener('scroll', activateNav, { passive: true });
         });
     </script>
 </body>
